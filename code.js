@@ -2,19 +2,31 @@
 //      GLOBAL VARS        //
 /////////////////////////////
 
+// You can provide a main and fallback URL, e.g. one for use from the public internet
+// and one for use when you are on the same LAN as the machine running Dump1090
 var DUMP1090_URL = "http://mciserver.zapto.org:7654/dump1090-fa/data/aircraft.json";
 var DUMP1090_URL_FALLBACK = "http://192.168.1.241:8081/dump1090-fa/data/aircraft.json";
+
+// Map server URLs - if re-using this code you will need to provide your own Mapbox
+// access token in the Mapbox URL. You can still use my style.
 var MAPBOX_URL = "https://api.mapbox.com/styles/v1/ianrenton/ckchhz5ks23or1ipf1le41g56/tiles/256/{z}/{x}/{y}?access_token=pk.eyJ1IjoiaWFucmVudG9uIiwiYSI6ImNrY2h4ZzU1ejE1eXoyc25uZjRvMmkyc2IifQ.JN65BkQfwQQIDfpMP_fFIQ";
 var OPENAIP_URL = "http://{s}.tile.maps.openaip.net/geowebcache/service/tms/1.0.0/openaip_basemap@EPSG%3A900913@png/{z}/{x}/{y}.png";
+
+// Base station position and map default position/zoom
 var BASE_STATION_POS = [50.75128, -1.90168];
 var BASE_STATION_SOFTWARE = ["PiAware 3.8.1", "dump1090-fa"];
 var START_LAT_LON = [50.75128, -1.90168];
 var START_ZOOM = 10;
+
+// Airports - you can add some with their own symbols if you like by following this
+// example, although I find it gets cluttered when using the OpenAIP layer as well
 var AIRPORTS = [
 //    {name: "Bournemouth Airport", lat: 50.78055, lon: -1.83938},
 //    {name: "Southampton Airport", lat: 50.95177, lon: -1.35625}
 ];
 
+// More globals - you should not have to edit beyond this point unless you want
+// to change how the software works!
 var MACH_TO_KNOTS = 666.739;
 var KNOTS_TO_MPS = 0.514444;
 var DEAD_RECKON_TIME_MS = 60000;
@@ -32,7 +44,8 @@ var currentServerWorkedOnce = false;
 //        CLASSES          //
 /////////////////////////////
 
-// Entity class
+// Entity class.
+// Altitude is stored in metres, heading/lat/lon in degrees, speed in knots.
 class Entity {
     constructor(icao, fixed, lat, lon, heading, altitude, speed, name, squawk, category, symbol, desc1, desc2, rssi, updateTime, posUpdateTime) {
         this.icao = icao;
@@ -201,6 +214,7 @@ async function handleData(result) {
             }
         }
 
+        // Now create or update the entity.
         if (!entities.has(a.hex)) {
             // Doesn't exist, so create
             entities.set(a.hex, new Entity(a.hex, false, a.lat, a.lon, bestHeading, bestAlt, bestSpeed, a.flight, a.squawk, a.category, CIVILIAN_AIRCRAFT_SYMBOL, "", "", a.rssi, seen, posSeen));
@@ -234,7 +248,8 @@ async function handleData(result) {
         }
     }
 
-    // Check for timed out aircraft
+    // Check for timed out aircraft that need to be marked as anticipated
+    // or dropped from the track table.
     entities.forEach(function(e) {
         if (!e.fixed) {
             if (moment().diff(e.updateTime) > DROP_TRACK_TIME_MS) {
@@ -293,8 +308,8 @@ async function updateTable() {
             rowFields += "<td>" + ((e.name != null) ? "<a href='https://flightaware.com/live/flight/" + e.name + "'>" + e.name + "</a>" : "UNK") + "</td>";
             rowFields += "<td>" + ((e.squawk != null) ? e.squawk : "UNK") + "</td>";
             rowFields += "<td>" + ((e.category != null) ? e.category : "UNK") + "</td>";
-            rowFields += "<td>" + ((e.position() != null) ? e.position()[0] : "UNK") + "</td>";
-            rowFields += "<td>" + ((e.position() != null) ? e.position()[1] : "UNK") + "</td>";
+            rowFields += "<td>" + ((e.position() != null) ? (Math.abs(e.position()[0]).toFixed(4).padStart(7, '0') + ((e.position()[0] >= 0) ? 'N' : 'S')) : "UNK") + "</td>";
+            rowFields += "<td>" + ((e.position() != null) ? (Math.abs(e.position()[1]).toFixed(4).padStart(8, '0') + ((e.position()[1] >= 0) ? 'E' : 'W')) : "UNK") + "</td>";
             rowFields += "<td>" + ((e.altitude != null) ? e.altitude.toFixed(0) : "UNK") + "</td>";
             rowFields += "<td>" + ((e.heading != null) ? e.heading.toFixed(0) : "UNK") + "</td>";
             rowFields += "<td>" + ((e.speed != null) ? e.speed.toFixed(0) : "UNK") + "</td>";
