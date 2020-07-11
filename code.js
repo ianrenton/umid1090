@@ -339,7 +339,7 @@ for (ap of AIRPORTS) {
     i++;
     entities.set(i, new Entity(i, true, ap.lat, ap.lon, null, null, null, ap.name, null, null, AIRPORT_SYMBOL, "", "", null, moment()));
 }
-
+updateMap();
 
 /////////////////////////////
 //          INIT           //
