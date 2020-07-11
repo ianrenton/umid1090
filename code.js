@@ -126,7 +126,7 @@ function requestData() {
       $("span#trackerstatus").html("TRACKER OFFLINE");
       $("span#trackerstatus").removeClass("trackerstatusgood");
       $("span#trackerstatus").removeClass("trackerstatuswarning");
-      $("span#trackerstatus").addClass("trackerstatusproblem");
+      $("span#trackerstatus").addClass("trackerstatuserror");
     });
 }
 
@@ -138,12 +138,12 @@ async function handleData(result) {
     // Set tracker status
     if (result.aircraft.length > 0) {
         $("span#trackerstatus").html("ONLINE, TRACKING " + result.aircraft.length + " AIRCRAFT");
-        $("span#trackerstatus").removeClass("trackerstatusproblem");
+        $("span#trackerstatus").removeClass("trackerstatuserror");
         $("span#trackerstatus").removeClass("trackerstatuswarning");
         $("span#trackerstatus").addClass("trackerstatusgood");
     } else {
         $("span#trackerstatus").html("ONLINE, NO AIRCRAFT DETECTED");
-        $("span#trackerstatus").removeClass("trackerstatusproblem");
+        $("span#trackerstatus").removeClass("trackerstatuserror");
         $("span#trackerstatus").addClass("trackerstatuswarning");
         $("span#trackerstatus").removeClass("trackerstatusgood");
     }
