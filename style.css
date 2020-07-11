@@ -112,3 +112,13 @@ div.tablenodata {
 .leaflet-container .leaflet-control-attribution {
     background: none;
 }
+
+/* Mobile */
+@media only screen and (max-width: 600px) {
+    div#top {
+        display: none;
+    }
+    div#tote {
+        display: none;
+    }
+}
