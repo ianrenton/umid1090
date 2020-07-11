@@ -1,0 +1,114 @@
+/* Overall */
+html, body, div#map { 
+    width:100%; 
+    height:100%; 
+    margin:0; 
+    overflow: hidden;
+    font-family: sans-serif;
+}
+
+/* Layout */
+div#top {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    padding: 0.6em 1em 0.3em 1em;
+    z-index: 999;
+}
+div#topright {
+    float: right;
+    margin-right: 2em;
+}
+div#tote {
+    width: 43em;
+    height:100%; 
+    float: right;
+    padding: 5em 1em 1em 1em;
+    overflow: hidden;
+}
+div#map { 
+    width:auto; 
+    height:100%; 
+    margin:0; 
+    overflow: hidden;
+}
+div.centre {
+    text-align: center;
+}
+
+/* Styles */
+div#top {
+    background-color: #b8c6db;
+    background-image: linear-gradient(0deg, #b8c6db 0%, #f5f7fa 74%);
+    border-bottom: 1px solid lightgrey;
+}
+span#title {
+    font-size: 1.5em;
+    font-weight: bold;
+}
+span#description {
+    font-size: 0.7em;
+    margin-left: 2em;
+    color: #555;
+}
+span#meta {
+    font-size: 0.7em;
+    color: #555;
+    line-height: 3em;
+}
+span#meta a {
+    color: #333;
+}
+div#tote {
+    background-color: #f5f7fa;
+    border-left: 1px solid lightgrey;
+    font-size: 0.9em;
+}
+table.tracktable {
+    margin-top: 1em;
+    font-size: 1em;
+    border-collapse: collapse;
+    width: 100%;
+}
+
+table.tracktable, table.tracktable th, table.tracktable td {
+    border: 1px solid black;
+    text-align: center;
+}
+table.tracktable th {
+    background-color: #b8c6db;
+    background-image: linear-gradient(0deg, #b8c6db 0%, #f5f7fa 74%);
+}
+
+span#trackerstatus {
+    font-weight: bold;
+}
+span.trackerstatusgood {
+    color: darkgreen;
+}
+span.trackerstatuswarning {
+    color: orange;
+}
+span.trackerstatuserror {
+    animation: blinker 1s linear infinite;
+    color: red;
+}
+
+@keyframes blinker {
+  50% {
+    opacity: 0;
+  }
+}
+
+div.tablenodata {
+    margin: 0.5em;
+    text-align: center;
+    font-weight: bold;
+    color: orange;
+}
+
+/* Leaflet.js mods */
+.leaflet-container .leaflet-control-attribution {
+    background: none;
+}

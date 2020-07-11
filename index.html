@@ -1,0 +1,31 @@
+<html>
+    <head>
+        <title>U.M.I.D 1090 Aircraft Tracking Interface</title>
+
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+        <link href="https://fonts.googleapis.com/css?family=Exo+2:400,700,100" rel="stylesheet" type="text/css">
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.6.0/dist/leaflet.css" integrity="sha512-xwE/Az9zrjBIphAcBb3F6JVqxf46+CDLwfLMHloNu6KEQCAWi6HcDUbeOfBIptF7tcCzusKFjFw2yuvEpDL9wQ==" crossorigin=""/>
+        <link href="style.css" rel="stylesheet" type="text/css">
+
+        <script src="https://code.jquery.com/jquery-3.4.1.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+        <script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js" integrity="sha512-gZwIG9x3wUXg2hdXF6+rVkLF/0Vi9U8D2Ntg4Ga5I5BZpVkVxlJWbSQtXPSiUTtC0TjtGOmxa1AJPuV0CPthew==" crossorigin=""></script>
+        <script src="leaflet.polylineDecorator.js"></script>
+        <script src="milsymbol.js"></script>
+        <script src="moment.js"></script>
+        <script src="latlongcalc.js"></script>
+    </head>
+    <body>
+        <div id="top">
+            <div id="topright"><span id="meta">Made by <a href="https://ianrenton.com">Ian Renton</a> | Hardware Setup | <a href="https://github.com/ianrenton/umid1090">GitHub Repository</a> | <a href="https://flightaware.com/adsb/stats/user/ianrenton">FlightAware Stats</a></div>
+            <div id="topleft"><span id="title">U.M.I.D. 1090</span><span id="description">Unnecessary Military Interface for Dump1090</div>
+        </div>
+        <div id="tote">
+            <div class="centre">Tracker Status: <span id="trackerstatus"></span></div>
+            <div id="tracktablearea"><table id="tracktable"></table></div>
+        </div>
+        <div id="map"></div>
+        <script src="code.js"></script>
+    </body>
+</html>
