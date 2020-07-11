@@ -3,7 +3,7 @@
 /////////////////////////////
 
 var DUMP1090_URL = "http://mciserver.zapto.org:7654/dump1090-fa/data/aircraft.json";
-//var DUMP1090_URL = "http://192.168.1.241:8081/dump1090-fa/data/aircraft.json";
+var DUMP1090_URL_FALLBACK = "http://192.168.1.241:8081/dump1090-fa/data/aircraft.json";
 var MAPBOX_URL = "https://api.mapbox.com/styles/v1/ianrenton/ckchhz5ks23or1ipf1le41g56/tiles/256/{z}/{x}/{y}?access_token=pk.eyJ1IjoiaWFucmVudG9uIiwiYSI6ImNrY2h4ZzU1ejE1eXoyc25uZjRvMmkyc2IifQ.JN65BkQfwQQIDfpMP_fFIQ";
 var OPENAIP_URL = "http://{s}.tile.maps.openaip.net/geowebcache/service/tms/1.0.0/openaip_basemap@EPSG%3A900913@png/{z}/{x}/{y}.png";
 var BASE_STATION_POS = [50.75128, -1.90168];
@@ -25,6 +25,8 @@ var BASE_STATION_SYMBOL = "SFGPUUS-----";
 var AIRPORT_SYMBOL = "SFGPIBA---H";
 
 var entities = new Map(); // ICAO -> Entity
+var dump1090url = DUMP1090_URL;
+var currentServerWorkedOnce = false;
 
 /////////////////////////////
 //        CLASSES          //
@@ -115,18 +117,27 @@ class Entity {
 
 // JSON data retrieval method
 function requestData() {
-    var url = DUMP1090_URL + "?_=" + (new Date()).getTime();
+    var url = dump1090url + "?_=" + (new Date()).getTime();
     $.getJSON(url, async function(result) {
         // Store refresh date
         lastRefresh = new Date();
+        currentServerWorkedOnce = true;
         // Unpack data
         handleData(result);
     })
     .fail(function() {
-      $("span#trackerstatus").html("TRACKER OFFLINE");
-      $("span#trackerstatus").removeClass("trackerstatusgood");
-      $("span#trackerstatus").removeClass("trackerstatuswarning");
-      $("span#trackerstatus").addClass("trackerstatuserror");
+      if (dump1090url == DUMP1090_URL && !currentServerWorkedOnce) {
+        $("span#trackerstatus").html("TRYING FALLBACK SERVER...");
+        $("span#trackerstatus").removeClass("trackerstatusgood");
+        $("span#trackerstatus").removeClass("trackerstatuswarning");
+        $("span#trackerstatus").addClass("trackerstatuserror");
+        dump1090url = DUMP1090_URL_FALLBACK;
+      } else {
+        $("span#trackerstatus").html("TRACKER OFFLINE");
+        $("span#trackerstatus").removeClass("trackerstatusgood");
+        $("span#trackerstatus").removeClass("trackerstatuswarning");
+        $("span#trackerstatus").addClass("trackerstatuserror");
+      }
     });
 }
 
