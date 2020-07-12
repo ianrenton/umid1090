@@ -306,12 +306,12 @@ async function handleData(result) {
     // Implied symbol
     var symbol = CIVILIAN_AIRCRAFT_SYMBOL;
     if (a.category != null && CATEGORY_SYMBOLS.has(a.category)) {
-        symbol = CATEGORY_SYMBOLS.get(a.category);
+      symbol = CATEGORY_SYMBOLS.get(a.category);
     }
     // Implied category description
     var catDescrip = "";
     if (a.category != null && CATEGORY_DESCRIPTIONS.has(a.category)) {
-        catDescrip = a.category + " " + CATEGORY_DESCRIPTIONS.get(a.category);
+      catDescrip = a.category + " " + CATEGORY_DESCRIPTIONS.get(a.category);
     }
 
     // Now create or update the entity.
@@ -346,7 +346,9 @@ async function handleData(result) {
       }
       e.rssi = a.rssi;
       e.updateTime = seen;
-      e.posUpdateTime = posSeen;
+      if (posSeen != null) {
+        e.posUpdateTime = posSeen;
+      }
     }
   }
 }
