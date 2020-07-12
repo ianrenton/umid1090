@@ -451,7 +451,7 @@ async function updateTable() {
 // Utility function to get a table cell colour class depending on data age
 function getAgeColor(time) {
   if (time != null) {
-    var age = moment().diff(time, 'seconds');
+    var age = moment().diff(time);
     if (age <= DEAD_RECKON_TIME_MS) {
       return "green";
     } else if (age <= DROP_TRACK_TIME_MS) {
