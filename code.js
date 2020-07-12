@@ -40,6 +40,7 @@ var entities = new Map(); // ICAO -> Entity
 var dump1090url = DUMP1090_URL;
 var currentServerWorkedOnce = false;
 
+
 /////////////////////////////
 //        CLASSES          //
 /////////////////////////////
@@ -166,6 +167,7 @@ class Entity {
   }
 }
 
+
 /////////////////////////////
 //       FUNCTIONS         //
 /////////////////////////////
@@ -173,35 +175,29 @@ class Entity {
 // JSON data retrieval method
 function requestData() {
   var url = dump1090url + "?_=" + (new Date()).getTime();
-  $.getJSON(url, async function(result) {
-      // Store refresh date
-      lastRefresh = new Date();
-      currentServerWorkedOnce = true;
-      // Unpack data
+  $.ajax({
+    url: url,
+    dataType: 'json',
+    timeout: 9000,
+    success: async function(result) {
       handleData(result);
-    })
-    .fail(function() {
-      if (dump1090url == DUMP1090_URL && !currentServerWorkedOnce) {
-        $("span#trackerstatus").html("TRYING FALLBACK SERVER...");
-        $("span#trackerstatus").removeClass("trackerstatusgood");
-        $("span#trackerstatus").removeClass("trackerstatuswarning");
-        $("span#trackerstatus").addClass("trackerstatuserror");
-        dump1090url = DUMP1090_URL_FALLBACK;
-      } else {
-        $("span#trackerstatus").html("TRACKER OFFLINE");
-        $("span#trackerstatus").removeClass("trackerstatusgood");
-        $("span#trackerstatus").removeClass("trackerstatuswarning");
-        $("span#trackerstatus").addClass("trackerstatuserror");
-      }
-    });
+    },
+    error: function() {
+      handleFailure();
+    },
+    complete: function() {
+      updateAll();
+    }
+  });
 }
 
-// Callback data handler
+// Handle successful receive of data
 async function handleData(result) {
   // Debug
   console.log(JSON.stringify(result));
 
   // Set tracker status
+  currentServerWorkedOnce = true;
   if (result.aircraft.length > 0) {
     $("span#trackerstatus").html("ONLINE, TRACKING " + result.aircraft.length + " AIRCRAFT");
     $("span#trackerstatus").removeClass("trackerstatuserror");
@@ -289,7 +285,27 @@ async function handleData(result) {
       e.posUpdateTime = posSeen;
     }
   }
+}
 
+// Handle a failure to receive data
+async function handleFailure() {
+  if (dump1090url == DUMP1090_URL && !currentServerWorkedOnce) {
+    $("span#trackerstatus").html("TRYING FALLBACK SERVER...");
+    $("span#trackerstatus").removeClass("trackerstatusgood");
+    $("span#trackerstatus").removeClass("trackerstatuswarning");
+    $("span#trackerstatus").addClass("trackerstatuserror");
+    dump1090url = DUMP1090_URL_FALLBACK;
+  } else {
+    $("span#trackerstatus").html("TRACKER OFFLINE");
+    $("span#trackerstatus").removeClass("trackerstatusgood");
+    $("span#trackerstatus").removeClass("trackerstatuswarning");
+    $("span#trackerstatus").addClass("trackerstatuserror");
+  }
+}
+
+// Adjust entities if they need to have their symbol changed or be dropped,
+// then call updates on the map and table.
+async function updateAll() {
   // Check for timed out aircraft that need to be marked as anticipated
   // or dropped from the track table.
   entities.forEach(function(e) {
@@ -368,6 +384,7 @@ async function updateTable() {
   $('#tracktablearea').html(table);
 }
 
+
 /////////////////////////////
 //       MAP SETUP         //
 /////////////////////////////
@@ -391,7 +408,6 @@ L.tileLayer(OPENAIP_URL, {
 }).addTo(map);
 
 
-
 /////////////////////////////
 //     ENTITY SETUP        //
 /////////////////////////////
@@ -403,6 +419,7 @@ for (ap of AIRPORTS) {
   entities.set(i, new Entity(i, true, ap.lat, ap.lon, null, null, null, ap.name, null, null, AIRPORT_SYMBOL, "", "", null, moment()));
 }
 updateMap();
+
 
 /////////////////////////////
 //          INIT           //
