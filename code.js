@@ -2,10 +2,13 @@
 //      GLOBAL VARS        //
 /////////////////////////////
 
-// You can provide a main and fallback URL, e.g. one for use from the public internet
-// and one for use when you are on the same LAN as the machine running Dump1090
+// You can provide a main and alternate URL, e.g. one for use from the public internet
+// and one for use when you are on the same LAN as the machine running Dump1090.
+// Select the alternate URL by appending ?alt=true to the URL for UMID1090.
+// Normal users won't do this and will therefore use the main public URL, but you
+// can bookmark the "alt" version to always use your LAN address for testing.
 var DUMP1090_URL = "http://mciserver.zapto.org:7654/dump1090-fa/data/aircraft.json";
-var DUMP1090_URL_FALLBACK = "http://192.168.1.241:8081/dump1090-fa/data/aircraft.json";
+var DUMP1090_URL_ALT = "http://192.168.1.241:8081/dump1090-fa/data/aircraft.json";
 
 // Map server URLs - if re-using this code you will need to provide your own Mapbox
 // access token in the Mapbox URL. You can still use my style.
@@ -78,10 +81,7 @@ var CATEGORY_SYMBOLS = new Map([
   ["C2", "SUGP------"],
   ["C3", "SUGP------"]
 ]);
-
 var entities = new Map(); // ICAO -> Entity
-var dump1090url = DUMP1090_URL;
-var currentServerWorkedOnce = false;
 
 
 /////////////////////////////
@@ -363,18 +363,10 @@ async function handleData(result) {
 
 // Handle a failure to receive data
 async function handleFailure() {
-  if (dump1090url == DUMP1090_URL && !currentServerWorkedOnce) {
-    $("span#trackerstatus").html("TRYING FALLBACK SERVER...");
-    $("span#trackerstatus").removeClass("trackerstatusgood");
-    $("span#trackerstatus").removeClass("trackerstatuswarning");
-    $("span#trackerstatus").addClass("trackerstatuserror");
-    dump1090url = DUMP1090_URL_FALLBACK;
-  } else {
-    $("span#trackerstatus").html("TRACKER OFFLINE");
-    $("span#trackerstatus").removeClass("trackerstatusgood");
-    $("span#trackerstatus").removeClass("trackerstatuswarning");
-    $("span#trackerstatus").addClass("trackerstatuserror");
-  }
+  $("span#trackerstatus").html("TRACKER OFFLINE");
+  $("span#trackerstatus").removeClass("trackerstatusgood");
+  $("span#trackerstatus").removeClass("trackerstatuswarning");
+  $("span#trackerstatus").addClass("trackerstatuserror");
 }
 
 // Adjust entities if they need to have their symbol changed or be dropped,
@@ -520,6 +512,14 @@ updateMap();
 /////////////////////////////
 //          INIT           //
 /////////////////////////////
+
+// Pick which URL to use based on the query string parameters
+const queryString = window.location.search;
+const urlParams = new URLSearchParams(queryString);
+var dump1090url = DUMP1090_URL;
+if (urlParams.get("alt") == "true") {
+  dump1090url = DUMP1090_URL_ALT;
+}
 
 // Set up the timed data request & update threads.
 // Request data now and every 10 sec, this also updates the table at that point
