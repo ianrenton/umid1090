@@ -97,7 +97,7 @@ span#trackerstatus {
     font-weight: bold;
 }
 span.trackerstatusgood {
-    color: darkgreen;
+    color: green;
 }
 span.trackerstatuswarning {
     color: orange;
