@@ -160,11 +160,11 @@ class Entity {
     // Change symbol to "anticipated" if dead reckoning
     var symbol = this.symbol;
     if (this.oldEnoughToDR()) {
-      symbol = symbol.substr(0, 3) + "A" + this.substr(4);
+      symbol = symbol.substr(0, 3) + "A" + symbol.substr(4);
     }
 
     // Generate full symbol for display
-    var mysymbol = new ms.Symbol(this.symbol, {
+    var mysymbol = new ms.Symbol(symbol, {
       size: 35,
       staffComments: this.desc1.toUpperCase(),
       additionalInformation: this.desc2.toUpperCase(),
@@ -172,7 +172,7 @@ class Entity {
       altitudeDepth: (this.altitude != null) ? (this.altitude.toFixed(0) + "M") : "",
       speed: (this.speed != null) ? (this.speed.toFixed(0) + "KTS") : "",
       type: (this.name != null) ? this.name.toUpperCase() : "",
-      dtg: (this.fixed ? "" : this.posUpdateTime.utc().format("DDHHmmss[Z]MMMYY").toUpperCase()),
+      dtg: ((this.fixed || this.posUpdateTime == null) ? "" : this.posUpdateTime.utc().format("DDHHmmss[Z]MMMYY").toUpperCase()),
       location: Math.abs(lat).toFixed(4).padStart(7, '0') + ((lat >= 0) ? 'N' : 'S') + Math.abs(lon).toFixed(4).padStart(8, '0') + ((lon >= 0) ? 'E' : 'W')
     });
     mysymbol = mysymbol.setOptions({
@@ -422,7 +422,7 @@ async function updateTable() {
     // Only real aircraft
     if (e.fixed == false) {
       var rowFields = "<td>" + e.icao.toUpperCase() + "</td>";
-      rowFields += "<td>" + ((e.name != null) ? "<a href='https://flightaware.com/live/flight/" + e.name + "'>" + e.name + "</a>" : "UNK") + "</td>";
+      rowFields += "<td>" + ((e.name != null) ? "<a href='https://flightaware.com/live/flight/" + e.name + "' target='_blank'>" + e.name + "</a>" : "UNK") + "</td>";
       rowFields += "<td>" + ((e.squawk != null) ? e.squawk : "UNK") + "</td>";
       rowFields += "<td>" + ((e.category != null) ? e.category : "UNK") + "</td>";
       rowFields += "<td>" + ((e.position() != null) ? (Math.abs(e.position()[0]).toFixed(4).padStart(7, '0') + ((e.position()[0] >= 0) ? 'N' : 'S')) : "UNK") + "</td>";
