@@ -170,7 +170,7 @@ class Entity {
       additionalInformation: this.desc2.toUpperCase(),
       direction: (this.heading != null) ? this.heading : "",
       altitudeDepth: (this.altitude != null) ? (this.altitude.toFixed(0) + "M") : "",
-      speed: (this.speed != null) ? (this.speed().toFixed(0) + "KTS") : "",
+      speed: (this.speed != null) ? (this.speed.toFixed(0) + "KTS") : "",
       type: (this.name != null) ? this.name.toUpperCase() : "",
       dtg: (this.fixed ? "" : this.posUpdateTime.utc().format("DDHHmmss[Z]MMMYY").toUpperCase()),
       location: Math.abs(lat).toFixed(4).padStart(7, '0') + ((lat >= 0) ? 'N' : 'S') + Math.abs(lon).toFixed(4).padStart(8, '0') + ((lon >= 0) ? 'E' : 'W')
