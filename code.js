@@ -431,8 +431,8 @@ async function updateTable() {
       rowFields += "<td>" + ((e.heading != null) ? e.heading.toFixed(0) : "UNK") + "</td>";
       rowFields += "<td>" + ((e.speed != null) ? e.speed.toFixed(0) : "UNK") + "</td>";
       rowFields += "<td>" + e.rssi + "</td>";
-      rowFields += "<td>" + ((e.posUpdateTime != null) ? moment().diff(e.posUpdateTime, 'seconds') : "N/A") + "</td>";
-      rowFields += "<td>" + ((e.updateTime != null) ? moment().diff(e.updateTime, 'seconds') : "N/A") + "</td>";
+      rowFields += "<td class='" + getAgeColor(e.posUpdateTime) + "'>" + ((e.posUpdateTime != null) ? moment().diff(e.posUpdateTime, 'seconds') : "N/A") + "</td>";
+      rowFields += "<td class='" + getAgeColor(e.updateTime) + "'>" + ((e.updateTime != null) ? moment().diff(e.updateTime, 'seconds') : "N/A") + "</td>";
       var row = $('<tr>').html(rowFields);
 
       // Add to table
@@ -446,6 +446,19 @@ async function updateTable() {
 
   // Update DOM
   $('#tracktablearea').html(table);
+}
+
+// Utility function to get a table cell colour class depending on data age
+function getAgeColor(time) {
+  if (time != null) {
+    var age = moment().diff(time, 'seconds');
+    if (age <= DEAD_RECKON_TIME_MS) {
+      return "green";
+    } else if (age <= DROP_TRACK_TIME_MS) {
+      return "orange";
+    }
+  }
+  return "red";
 }
 
 
