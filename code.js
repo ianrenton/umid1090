@@ -89,7 +89,7 @@ var currentServerWorkedOnce = false;
 /////////////////////////////
 
 // Entity class.
-// Altitude is stored in metres, heading/lat/lon in degrees, speed in knots.
+// Altitude is stored in feet, heading/lat/lon in degrees, speed in knots.
 class Entity {
   // Create new entity
   constructor(icao, fixed, lat, lon, heading, altitude, speed, name, squawk, category, symbol, desc1, desc2, rssi, updateTime, posUpdateTime) {
@@ -169,7 +169,7 @@ class Entity {
       staffComments: this.desc1.toUpperCase(),
       additionalInformation: this.desc2.toUpperCase(),
       direction: (this.heading != null) ? this.heading : "",
-      altitudeDepth: (this.altitude != null) ? (this.altitude.toFixed(0) + "M") : "",
+      altitudeDepth: (this.altitude != null) ? (this.altitude.toFixed(0) + "FT") : "",
       speed: (this.speed != null) ? (this.speed.toFixed(0) + "KTS") : "",
       type: (this.name != null) ? this.name.toUpperCase() : "",
       dtg: ((this.fixed || this.posUpdateTime == null) ? "" : this.posUpdateTime.utc().format("DDHHmmss[Z]MMMYY").toUpperCase()),
@@ -414,7 +414,7 @@ async function updateTable() {
   // Create header
   var table = $('<table>');
   table.addClass('tracktable');
-  var headerFields = "<th>ICAO</th><th>IDENT</th><th>SQU</th><th>CAT</th><th>LAT</th><th>LON</th><th>ALT<br>M</th><th>HDG<br>DEG</th><th>SPD<br>KTS</th><th>SIG<br>dB</th><th>POS<br/>AGE</th><th>DATA<br/>AGE</th>";
+  var headerFields = "<th>ICAO</th><th>IDENT</th><th>SQU</th><th>CAT</th><th>LAT</th><th>LON</th><th>ALT<br>FT</th><th>HDG<br>DEG</th><th>SPD<br>KTS</th><th>SIG<br>dB</th><th>POS<br/>AGE</th><th>DATA<br/>AGE</th>";
   var header = $('<tr class="data">').html(headerFields);
   table.append(header);
 
