@@ -92,7 +92,7 @@ var currentServerWorkedOnce = false;
 // Altitude is stored in feet, heading/lat/lon in degrees, speed in knots.
 class Entity {
   // Create new entity
-  constructor(icao, fixed, lat, lon, heading, altitude, speed, name, squawk, category, symbol, desc1, desc2, rssi, updateTime, posUpdateTime) {
+  constructor(icao, fixed, lat, lon, heading, altitude, altRate, speed, name, squawk, category, symbol, desc1, desc2, rssi, updateTime, posUpdateTime) {
     this.icao = icao;
     this.fixed = fixed;
     this.positionHistory = [];
@@ -101,6 +101,7 @@ class Entity {
     }
     this.heading = heading;
     this.altitude = altitude;
+    this.altRate = altRate;
     this.speed = speed;
     this.name = (name != null) ? name.trim().replace(/^\s+|\s+$/g, '') : "";
     this.squawk = squawk;
@@ -276,6 +277,10 @@ async function handleData(result) {
     if (a.alt_baro != null) {
       bestAlt = a.alt_baro;
     }
+    var bestAltRate = a.geom_rate;
+    if (a.baro_rate != null) {
+      bestAltRate = a.baro_rate;
+    }
     var bestSpeed = null;
     if (a.mach != null) {
       bestSpeed = a.mach * MACH_TO_KNOTS;
@@ -317,7 +322,7 @@ async function handleData(result) {
     // Now create or update the entity.
     if (!entities.has(a.hex)) {
       // Doesn't exist, so create
-      entities.set(a.hex, new Entity(a.hex, false, a.lat, a.lon, bestHeading, bestAlt, bestSpeed, a.flight, a.squawk, a.category, symbol, catDescrip, "", a.rssi, seen, posSeen));
+      entities.set(a.hex, new Entity(a.hex, false, a.lat, a.lon, bestHeading, bestAlt, bestAltRate, bestSpeed, a.flight, a.squawk, a.category, symbol, catDescrip, "", a.rssi, seen, posSeen));
     } else {
       // Exists, so update
       var e = entities.get(a.hex);
@@ -329,6 +334,9 @@ async function handleData(result) {
       }
       if (bestAlt != null) {
         e.altitude = bestAlt;
+      }
+      if (bestAltRate != null) {
+        e.altRate = bestAltRate;
       }
       if (a.mach != null) {
         e.speed = bestSpeed;
@@ -423,13 +431,22 @@ async function updateTable() {
   tableList.forEach(function(e) {
     // Only real aircraft
     if (e.fixed == false) {
+      // Altitude rate symbol
+      var altRateSymb = "";
+      if (e.altRate != null && e.altRate > 100) {
+        altRateSymb = "\u25b2";
+      } else if (e.altRate != null && e.altRate < -100) {
+        altRateSymb = "\u25bc";
+      }
+
+      // Generate table row
       var rowFields = "<td>" + e.icao.toUpperCase() + "</td>";
       rowFields += "<td>" + ((e.name != null) ? "<a href='https://flightaware.com/live/flight/" + e.name + "' target='_blank'>" + e.name + "</a>" : "UNK") + "</td>";
       rowFields += "<td>" + ((e.squawk != null) ? e.squawk : "UNK") + "</td>";
       rowFields += "<td>" + ((e.category != null) ? e.category : "UNK") + "</td>";
       rowFields += "<td>" + ((e.position() != null) ? (Math.abs(e.position()[0]).toFixed(4).padStart(7, '0') + ((e.position()[0] >= 0) ? 'N' : 'S')) : "UNK") + "</td>";
       rowFields += "<td>" + ((e.position() != null) ? (Math.abs(e.position()[1]).toFixed(4).padStart(8, '0') + ((e.position()[1] >= 0) ? 'E' : 'W')) : "UNK") + "</td>";
-      rowFields += "<td>" + ((e.altitude != null) ? e.altitude.toFixed(0) : "UNK") + "</td>";
+      rowFields += "<td>" + ((e.altitude != null) ? (e.altitude.toFixed(0) + altRateSymb) : "UNK") + "</td>";
       rowFields += "<td>" + ((e.heading != null) ? e.heading.toFixed(0) : "UNK") + "</td>";
       rowFields += "<td>" + ((e.speed != null) ? e.speed.toFixed(0) : "UNK") + "</td>";
       rowFields += "<td>" + e.rssi + "</td>";
@@ -492,10 +509,10 @@ L.tileLayer(OPENAIP_URL, {
 /////////////////////////////
 
 var i = 0;
-entities.set(i, new Entity(i, true, BASE_STATION_POS[0], BASE_STATION_POS[1], null, null, null, "Base Station", null, null, BASE_STATION_SYMBOL, BASE_STATION_SOFTWARE[0], BASE_STATION_SOFTWARE[1], null, moment()));
+entities.set(i, new Entity(i, true, BASE_STATION_POS[0], BASE_STATION_POS[1], null, null, null, null, "Base Station", null, null, BASE_STATION_SYMBOL, BASE_STATION_SOFTWARE[0], BASE_STATION_SOFTWARE[1], null, moment()));
 for (ap of AIRPORTS) {
   i++;
-  entities.set(i, new Entity(i, true, ap.lat, ap.lon, null, null, null, ap.name, null, null, AIRPORT_SYMBOL, "", "", null, moment()));
+  entities.set(i, new Entity(i, true, ap.lat, ap.lon, null, null, null, null, ap.name, null, null, AIRPORT_SYMBOL, "", "", null, moment()));
 }
 updateMap();
 
