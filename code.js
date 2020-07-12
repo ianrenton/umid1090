@@ -32,9 +32,52 @@ var KNOTS_TO_MPS = 0.514444;
 var DEAD_RECKON_TIME_MS = 60000;
 var DROP_TRACK_TIME_MS = 300000;
 var CIVILIAN_AIRCRAFT_SYMBOL = "SUAPCF----";
-var CIVILIAN_AIRCRAFT_ANTICIPATED_SYMBOL = "SUAACF----";
 var BASE_STATION_SYMBOL = "SFGPUUS-----";
 var AIRPORT_SYMBOL = "SFGPIBA---H";
+var CATEGORY_DESCRIPTIONS = new Map([
+  ["A0", "Aircraft"],
+  ["A1", "Light Aircraft"],
+  ["A2", "Small Aircraft"],
+  ["A3", "Large Aircraft"],
+  ["A4", "High Vortex Aircraft"],
+  ["A5", "Heavy Aircraft"],
+  ["A6", "High Performance Aircraft"],
+  ["A7", "Rotorcraft"],
+  ["B0", "Misc Air"],
+  ["B1", "Glider/sailplane"],
+  ["B2", "Lighter-than-Air"],
+  ["B3", "Parachutist/Skydiver"],
+  ["B4", "Ultralight/hang-glider/paraglider"],
+  ["B5", "Reserved"],
+  ["B6", "UAV"],
+  ["B7", "Space vehicle"],
+  ["C0", "Ground Track"],
+  ["C1", "Emergency Vehicle"],
+  ["C2", "Service Vehicle"],
+  ["C3", "Obstruction"]
+]);
+var CATEGORY_SYMBOLS = new Map([
+  ["A0", "SUAPCF----"],
+  ["A1", "SUAPCF----"],
+  ["A2", "SUAPCF----"],
+  ["A3", "SUAPCF----"],
+  ["A4", "SUAPCF----"],
+  ["A5", "SUAPCF----"],
+  ["A6", "SUAPCF----"],
+  ["A7", "SUAPCH----"],
+  ["B0", "SUAPC-----"],
+  ["B1", "SUAPC-----"],
+  ["B2", "SUAPCL----"],
+  ["B3", "SUAPC-----"],
+  ["B4", "SUAPC-----"],
+  ["B5", "SUAPC-----"],
+  ["B6", "SUAPMFQ---"],
+  ["B7", "SUPPL-----"],
+  ["C0", "SUGP------"],
+  ["C1", "SUGP------"],
+  ["C2", "SUGP------"],
+  ["C3", "SUGP------"]
+]);
 
 var entities = new Map(); // ICAO -> Entity
 var dump1090url = DUMP1090_URL;
@@ -114,6 +157,13 @@ class Entity {
     var lat = this.position()[0];
     var lon = this.position()[1];
 
+    // Change symbol to "anticipated" if dead reckoning
+    var symbol = this.symbol;
+    if (this.oldEnoughToDR()) {
+      symbol = symbol.substr(0, 3) + "A" + this.substr(4);
+    }
+
+    // Generate full symbol for display
     var mysymbol = new ms.Symbol(this.symbol, {
       size: 35,
       staffComments: this.desc1.toUpperCase(),
@@ -130,6 +180,7 @@ class Entity {
       civilianColor: false
     });
 
+    // Build into a Leaflet icon and return
     return L.icon({
       iconUrl: mysymbol.toDataURL(),
       iconAnchor: [mysymbol.getAnchor().x, mysymbol.getAnchor().y],
@@ -252,10 +303,21 @@ async function handleData(result) {
       }
     }
 
+    // Implied symbol
+    var symbol = CIVILIAN_AIRCRAFT_SYMBOL;
+    if (a.category != null && CATEGORY_SYMBOLS.has(a.category)) {
+        symbol = CATEGORY_SYMBOLS.get(e.category);
+    }
+    // Implied category description
+    var catDescrip = "";
+    if (a.category != null && CATEGORY_DESCRIPTIONS.has(a.category)) {
+        catDescrip = a.category + " " + CATEGORY_DESCRIPTIONS.get(e.category);
+    }
+
     // Now create or update the entity.
     if (!entities.has(a.hex)) {
       // Doesn't exist, so create
-      entities.set(a.hex, new Entity(a.hex, false, a.lat, a.lon, bestHeading, bestAlt, bestSpeed, a.flight, a.squawk, a.category, CIVILIAN_AIRCRAFT_SYMBOL, "", "", a.rssi, seen, posSeen));
+      entities.set(a.hex, new Entity(a.hex, false, a.lat, a.lon, bestHeading, bestAlt, bestSpeed, a.flight, a.squawk, a.category, symbol, catDescrip, "", a.rssi, seen, posSeen));
     } else {
       // Exists, so update
       var e = entities.get(a.hex);
@@ -279,6 +341,8 @@ async function handleData(result) {
       }
       if (a.category != null) {
         e.category = a.category;
+        e.desc1 = catDescrip;
+        e.symbol = symbol;
       }
       e.rssi = a.rssi;
       e.updateTime = seen;
@@ -306,19 +370,19 @@ async function handleFailure() {
 // Adjust entities if they need to have their symbol changed or be dropped,
 // then call updates on the map and table.
 async function updateAll() {
-  // Check for timed out aircraft that need to be marked as anticipated
-  // or dropped from the track table.
+  // Refresh the display
+  dropTimedOutAircraft();
+  updateMap();
+  updateTable();
+}
+
+// Drop any aircraft too old to be displayed
+function dropTimedOutAircraft() {
   entities.forEach(function(e) {
     if (e.oldEnoughToDelete()) {
       entities.delete(e.icao);
-    } else if (e.oldEnoughToDR()) {
-      e.symbol = CIVILIAN_AIRCRAFT_ANTICIPATED_SYMBOL;
     }
   });
-
-  // Refresh the display
-  updateMap();
-  updateTable();
 }
 
 // Update map, clearing old markers and drawing new ones
@@ -349,7 +413,7 @@ async function updateTable() {
   var table = $('<table>');
   table.addClass('tracktable');
   var headerFields = "<th>ICAO</th><th>IDENT</th><th>SQU</th><th>CAT</th><th>LAT</th><th>LON</th><th>ALT<br>M</th><th>HDG<br>DEG</th><th>SPD<br>KTS</th><th>SIG<br>dB</th><th>POS<br/>AGE</th><th>DATA<br/>AGE</th>";
-  var header = $('<tr>').html(headerFields);
+  var header = $('<tr class="data">').html(headerFields);
   table.append(header);
 
   // Create table rows
