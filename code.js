@@ -19,7 +19,7 @@ var OPENAIP_URL = "http://{s}.tile.maps.openaip.net/geowebcache/service/tms/1.0.
 var BASE_STATION_POS = [50.75128, -1.90168];
 var BASE_STATION_SOFTWARE = ["PiAware 3.8.1", "dump1090-fa"];
 var START_LAT_LON = [50.75128, -1.90168];
-var START_ZOOM = 10;
+var START_ZOOM = 9;
 
 // Airports - you can add some with their own symbols if you like by following this
 // example, although I find it gets cluttered when using the OpenAIP layer as well
