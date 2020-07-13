@@ -44,13 +44,13 @@ var CATEGORY_DESCRIPTIONS = new Map([
   ["A3", "Large Aircraft"],
   ["A4", "High Vortex Aircraft"],
   ["A5", "Heavy Aircraft"],
-  ["A6", "High Performance Aircraft"],
-  ["A7", "Rotorcraft"],
+  ["A6", "High Perf Aircraft"],
+  ["A7", "Rotary Wing"],
   ["B0", "Misc Air"],
   ["B1", "Glider/sailplane"],
   ["B2", "Lighter-than-Air"],
   ["B3", "Parachutist/Skydiver"],
-  ["B4", "Ultralight/hang-glider/paraglider"],
+  ["B4", "Ultralight/hang/paraglider"],
   ["B5", "Reserved"],
   ["B6", "UAV"],
   ["B7", "Space vehicle"],
@@ -207,15 +207,27 @@ class Entity {
     }
   }
 
-  // Generate a snail trail polyline for the entity
+  // Generate a snail trail polyline for the entity based on its
+  // reported positions
   trail() {
-    var tmp = this.positionHistory.slice();
-    if (this.oldEnoughToDR() && this.drPosition() != null) {
-      tmp.push(this.drPosition());
-    }
-    return L.polyline(tmp, {
+    return L.polyline(this.positionHistory, {
       color: '#007F0E'
     });
+  }
+
+  // Generate a snail trail line for the entity joining its
+  // last reported position with the current dead reckoned
+  // position, or null if not dead reckoning.
+  drTrail() {
+    if (this.positionHistory.length > 0 && this.oldEnoughToDR()) {
+      var points = [this.position(), this.drPosition()];
+      return L.line(points, {
+        color: '#007F0E',
+        dashArray: "5 5"
+      });
+    } else {
+      return null;
+    }
   }
 }
 
@@ -403,6 +415,11 @@ async function updateMap() {
   entities.forEach(function(e) {
     markersLayer.addLayer(e.trail());
   });
+  entities.forEach(function(e) {
+    if (e.drTrail() != null) {
+      markersLayer.addLayer(e.drTrail());
+    }
+  });
 }
 
 // Update track table
@@ -414,7 +431,7 @@ async function updateTable() {
   // Create header
   var table = $('<table>');
   table.addClass('tracktable');
-  var headerFields = "<th>ICAO</th><th>IDENT</th><th>SQU</th><th>CAT</th><th>LAT</th><th>LON</th><th>ALT<br>FT</th><th>HDG<br>DEG</th><th>SPD<br>KTS</th><th>SIG<br>dB</th><th>POS<br/>AGE</th><th>DATA<br/>AGE</th>";
+  var headerFields = "<th>HEX</th><th>IDENT</th><th>SQU</th><th>CAT</th><th>LAT</th><th>LON</th><th>ALT<br>FT</th><th>HDG<br>DEG</th><th>SPD<br>KTS</th><th>SIG<br>dB</th><th>POS<br/>AGE</th><th>DATA<br/>AGE</th>";
   var header = $('<tr class="data">').html(headerFields);
   table.append(header);
 
