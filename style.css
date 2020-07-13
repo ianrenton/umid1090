@@ -37,6 +37,10 @@ div#map {
 div.centre {
     text-align: center;
 }
+div#buttons {
+    margin-top: 1.5em;
+    text-align: center;
+}
 
 /* Styles */
 div#top {
@@ -76,6 +80,7 @@ table.tracktable {
 table.tracktable, table.tracktable th, table.tracktable td {
     border: 1px solid black;
     text-align: center;
+    cursor: default;
 }
 table.tracktable th {
     background-color: #b8c6db;
@@ -83,6 +88,9 @@ table.tracktable th {
 }
 table.tracktable tr:hover {
     background-color: #b8c6db;
+}
+table.tracktable tr.selected {
+    background-color: #4581CC !important;
 }
 td.red {
     background-color: red;

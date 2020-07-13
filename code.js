@@ -81,7 +81,8 @@ var CATEGORY_SYMBOLS = new Map([
   ["C2", "SUGP------"],
   ["C3", "SUGP------"]
 ]);
-var entities = new Map(); // ICAO -> Entity
+var entities = new Map(); // hex -> Entity
+var selectedEntityHex = "";
 
 
 /////////////////////////////
@@ -92,8 +93,8 @@ var entities = new Map(); // ICAO -> Entity
 // Altitude is stored in feet, heading/lat/lon in degrees, speed in knots.
 class Entity {
   // Create new entity
-  constructor(icao, fixed, lat, lon, heading, altitude, altRate, speed, name, squawk, category, symbol, desc1, desc2, rssi, updateTime, posUpdateTime) {
-    this.icao = icao;
+  constructor(hex, fixed, lat, lon, heading, altitude, altRate, speed, name, squawk, category, symbol, desc1, desc2, rssi, updateTime, posUpdateTime) {
+    this.hex = hex;
     this.fixed = fixed;
     this.positionHistory = [];
     if (lat != null) {
@@ -138,6 +139,16 @@ class Entity {
     }
   }
 
+  // Gets a position for the icon, either position() or drPosition() as required
+  iconPosition() {
+    var pos = this.position();
+    // If we are dead reckoning position, use that instead to place the marker
+    if (this.oldEnoughToDR() && this.drPosition() != null) {
+      pos = this.drPosition();
+    }
+    return pos;
+  }
+
   // Is the track old enough that we should display the dead reckoned
   // position instead of the real one?
   oldEnoughToDR() {
@@ -152,11 +163,13 @@ class Entity {
   // Generate a Milsymbol icon for the entity
   icon() {
     // No point returning an icon if we don't know where to draw it
-    if (this.position() == null) {
+    if (this.iconPosition() == null) {
       return null;
     }
-    var lat = this.position()[0];
-    var lon = this.position()[1];
+
+    // Get position for display
+    var lat = this.iconPosition()[0];
+    var lon = this.iconPosition()[1];
 
     // Change symbol to "anticipated" if dead reckoning
     var symbol = this.symbol;
@@ -172,7 +185,7 @@ class Entity {
       direction: (this.heading != null) ? this.heading : "",
       altitudeDepth: (this.altitude != null) ? (this.altitude.toFixed(0) + "FT") : "",
       speed: (this.speed != null) ? (this.speed.toFixed(0) + "KTS") : "",
-      type: (this.name != null) ? this.name.toUpperCase() : "",
+      type: (this.name != null && this.name != "") ? this.name.toUpperCase() : "HEX " + this.hex.toUpperCase(),
       dtg: ((this.fixed || this.posUpdateTime == null) ? "" : this.posUpdateTime.utc().format("DDHHmmss[Z]MMMYY").toUpperCase()),
       location: Math.abs(lat).toFixed(4).padStart(7, '0') + ((lat >= 0) ? 'N' : 'S') + Math.abs(lon).toFixed(4).padStart(8, '0') + ((lon >= 0) ? 'E' : 'W')
     });
@@ -192,26 +205,36 @@ class Entity {
   // placed at the last known position, or the dead reckoned position if DR
   // should be used
   marker() {
-    var pos = this.position();
+    var pos = this.iconPosition();
     var icon = this.icon();
-    // If we are dead reckoning position, use that instead to place the marker
-    if (this.oldEnoughToDR() && this.drPosition() != null) {
-      pos = this.drPosition();
-    }
     if (pos != null && icon != null) {
-      return L.marker(pos, {
+      // Create marker
+      var m = L.marker(pos, {
         icon: icon
       });
+      // Set the click action for the marker
+      var hex = this.hex;
+      m.on('click', (function(hex) {
+        return function() {
+          iconSelect(hex);
+        };
+      })(hex));
+      return m;
     } else {
       return null;
     }
+  }
+
+  // Check if the entity is currently selected
+  entitySelected() {
+    return this.hex == selectedEntityHex;
   }
 
   // Generate a snail trail polyline for the entity based on its
   // reported positions
   trail() {
     return L.polyline(this.positionHistory, {
-      color: '#007F0E'
+      color: ((this.hex == selectedEntityHex) ? '#4581CC' : '#007F0E')
     });
   }
 
@@ -221,8 +244,8 @@ class Entity {
   drTrail() {
     if (this.positionHistory.length > 0 && this.oldEnoughToDR()) {
       var points = [this.position(), this.drPosition()];
-      return L.line(points, {
-        color: '#007F0E',
+      return L.polyline(points, {
+        color: ((this.hex == selectedEntityHex) ? '#4581CC' : '#007F0E'),
         dashArray: "5 5"
       });
     } else {
@@ -394,7 +417,7 @@ async function updateAll() {
 function dropTimedOutAircraft() {
   entities.forEach(function(e) {
     if (e.oldEnoughToDelete()) {
-      entities.delete(e.icao);
+      entities.delete(e.hex);
     }
   });
 }
@@ -426,7 +449,7 @@ async function updateMap() {
 async function updateTable() {
   // Sort data for table
   tableList = Array.from(entities.values());
-  tableList.sort((a, b) => (a.icao > b.icao) ? 1 : -1);
+  tableList.sort((a, b) => (a.hex > b.hex) ? 1 : -1);
 
   // Create header
   var table = $('<table>');
@@ -449,7 +472,7 @@ async function updateTable() {
       }
 
       // Generate table row
-      var rowFields = "<td>" + e.icao.toUpperCase() + "</td>";
+      var rowFields = "<td>" + e.hex.toUpperCase() + "</td>";
       rowFields += "<td>" + ((e.name != null) ? "<a href='https://flightaware.com/live/flight/" + e.name + "' target='_blank'>" + e.name + "</a>" : "UNK") + "</td>";
       rowFields += "<td>" + ((e.squawk != null) ? e.squawk : "UNK") + "</td>";
       rowFields += "<td>" + ((e.category != null) ? e.category : "UNK") + "</td>";
@@ -461,7 +484,10 @@ async function updateTable() {
       rowFields += "<td>" + e.rssi + "</td>";
       rowFields += "<td class='" + getAgeColor(e.posUpdateTime) + "'>" + ((e.posUpdateTime != null) ? moment().diff(e.posUpdateTime, 'seconds') : "N/A") + "</td>";
       rowFields += "<td class='" + getAgeColor(e.updateTime) + "'>" + ((e.updateTime != null) ? moment().diff(e.updateTime, 'seconds') : "N/A") + "</td>";
-      var row = $('<tr>').html(rowFields);
+      var row = $('<tr name=' + e.hex + '>').html(rowFields);
+      if (e.entitySelected()) {
+        row.addClass("selected");
+      }
 
       // Add to table
       table.append(row);
@@ -474,6 +500,48 @@ async function updateTable() {
 
   // Update DOM
   $('#tracktablearea').html(table);
+}
+
+// Function called when an icon is clicked. Just set entity as selected.
+async function iconSelect(hex) {
+  select(hex);
+}
+
+// Function called when a table row is clicked. Set entity as selected and zoom
+// to it.
+async function tableSelect(hex) {
+  panTo(hex);
+  select(hex);
+}
+
+// Select the selected track
+async function select(hex) {
+  selectedEntityHex = hex;
+  $("button#deselect").prop('disabled', false);
+  updateMap();
+  updateTable();
+}
+
+// Deselect the selected track
+async function deselect() {
+  selectedEntityHex = "";
+  $("button#deselect").prop('disabled', true);
+  updateMap();
+  updateTable();
+}
+
+// Pan to an entity, given its hex code
+async function panTo(hex) {
+  var e = entities.get(hex);
+  if (e != null && e.iconPosition() != null) {
+    var pos = e.iconPosition();
+    map.panTo(e.iconPosition());
+  }
+}
+
+// Go back to starting view
+async function defaultView() {
+  map.setView(START_LAT_LON, START_ZOOM);
 }
 
 // Utility function to get a table cell colour class depending on data age
@@ -511,6 +579,16 @@ L.tileLayer(OPENAIP_URL, {
   subdomains: '12',
   opacity: 0.3
 }).addTo(map);
+
+
+/////////////////////////////
+//      TABLE SETUP        //
+/////////////////////////////
+
+// Clicking selects the entity
+$(document).on("click", "tr", function(e) {
+  tableSelect($(e.currentTarget).attr("name"));
+});
 
 
 /////////////////////////////

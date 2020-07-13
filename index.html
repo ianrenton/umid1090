@@ -11,7 +11,6 @@
 
         <script src="https://code.jquery.com/jquery-3.4.1.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
         <script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js" integrity="sha512-gZwIG9x3wUXg2hdXF6+rVkLF/0Vi9U8D2Ntg4Ga5I5BZpVkVxlJWbSQtXPSiUTtC0TjtGOmxa1AJPuV0CPthew==" crossorigin=""></script>
-        <script src="leaflet.polylineDecorator.js"></script>
         <script src="milsymbol.js"></script>
         <script src="moment.js"></script>
         <script src="latlongcalc.js"></script>
@@ -27,6 +26,7 @@
         <div id="tote">
             <div class="centre">Tracker Status: <span id="trackerstatus" class="trackerstatuserror">CONNECTING...</span></div>
             <div id="tracktablearea"><table id="tracktable"></table></div>
+            <div id="buttons"><button id="deselect" onclick="deselect()" disabled>Deselect Track</button> <button onclick="defaultView()">Default View</button></div>
         </div>
         <div id="map"></div>
         <script src="code.js"></script>
