@@ -540,7 +540,7 @@ async function panTo(hex) {
 }
 
 // Go back to starting view
-async function defaultView() {
+function defaultZoom() {
   map.setView(START_LAT_LON, START_ZOOM);
 }
 
