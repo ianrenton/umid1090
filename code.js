@@ -473,7 +473,7 @@ async function updateTable() {
 
       // Generate table row
       var rowFields = "<td><a href='https://flightaware.com/live/modes/" + e.hex + "/redirect' target='_blank'>" + e.hex.toUpperCase() + "</a></td>";
-      rowFields += "<td>" + ((e.name != null) ? e.name : "UNK") + "</td>";
+      rowFields += "<td>" + ((e.name != null) ? "<a href='https://flightaware.com/live/flight/" + e.name + "' target='_blank'>" + e.name + "</a>" : "UNK") + "</td>";
       rowFields += "<td>" + ((e.squawk != null) ? e.squawk : "UNK") + "</td>";
       rowFields += "<td>" + ((e.category != null) ? e.category : "UNK") + "</td>";
       rowFields += "<td>" + ((e.position() != null) ? (Math.abs(e.position()[0]).toFixed(4).padStart(7, '0') + ((e.position()[0] >= 0) ? 'N' : 'S')) : "UNK") + "</td>";
