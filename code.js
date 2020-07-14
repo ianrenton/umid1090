@@ -454,7 +454,7 @@ async function updateTable() {
   // Create header
   var table = $('<table>');
   table.addClass('tracktable');
-  var headerFields = "<th>HEX</th><th>IDENT</th><th>SQU</th><th>CAT</th><th>LAT</th><th>LON</th><th>ALT<br>FT</th><th>HDG<br>DEG</th><th>SPD<br>KTS</th><th>SIG<br>dB</th><th>POS<br/>AGE</th><th>DATA<br/>AGE</th>";
+  var headerFields = "<th>HEX</th><th>FLIGHT</th><th>SQU</th><th>CAT</th><th>LAT</th><th>LON</th><th>ALT<br>FT</th><th>HDG<br>DEG</th><th>SPD<br>KTS</th><th>SIG<br>dB</th><th>POS<br/>AGE</th><th>DATA<br/>AGE</th>";
   var header = $('<tr class="data">').html(headerFields);
   table.append(header);
 
@@ -472,8 +472,8 @@ async function updateTable() {
       }
 
       // Generate table row
-      var rowFields = "<td>" + e.hex.toUpperCase() + "</td>";
-      rowFields += "<td>" + ((e.name != null) ? "<a href='https://flightaware.com/live/flight/" + e.name + "' target='_blank'>" + e.name + "</a>" : "UNK") + "</td>";
+      var rowFields = "<td><a href='https://flightaware.com/live/modes/" + e.hex + "/redirect' target='_blank'>" + e.hex.toUpperCase() + "</a></td>";
+      rowFields += "<td>" + ((e.name != null) ? e.name : "UNK") + "</td>";
       rowFields += "<td>" + ((e.squawk != null) ? e.squawk : "UNK") + "</td>";
       rowFields += "<td>" + ((e.category != null) ? e.category : "UNK") + "</td>";
       rowFields += "<td>" + ((e.position() != null) ? (Math.abs(e.position()[0]).toFixed(4).padStart(7, '0') + ((e.position()[0] >= 0) ? 'N' : 'S')) : "UNK") + "</td>";
