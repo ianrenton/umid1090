@@ -163,8 +163,9 @@ div.tablenodata {
     }
     div#tote {
         display: none;
-        font-size: 8.5px;
         width: 100%;
+        padding: 4em 0em 0em 0em;
+        font-size: 8.5px;
     }
     div#mobileswitcher {
         display: block;
