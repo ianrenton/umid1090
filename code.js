@@ -605,6 +605,15 @@ updateMap();
 
 
 /////////////////////////////
+//   MOBILE PANEL SWITCH   //
+/////////////////////////////
+$("div#mobileswitcher").click(function() {
+  $("div#tote").toggle();
+  $("div#map").toggle();
+});
+
+
+/////////////////////////////
 //          INIT           //
 /////////////////////////////
 
