@@ -474,15 +474,15 @@ async function updateTable() {
 
       // Generate table row
       var rowFields = "<td><a href='https://flightaware.com/live/modes/" + e.hex + "/redirect' target='_blank'>" + e.hex.toUpperCase() + "</a></td>";
-      rowFields += "<td>" + ((e.name != null) ? "<a href='https://flightaware.com/live/flight/" + e.name + "' target='_blank'>" + e.name + "</a>" : "UNK") + "</td>";
-      rowFields += "<td class='" + getSquawkColor(e.squawk) + "'>" + ((e.squawk != null) ? e.squawk : "UNK") + "</td>";
-      rowFields += "<td>" + ((e.category != null) ? e.category : "UNK") + "</td>";
-      rowFields += "<td>" + ((e.position() != null) ? (Math.abs(e.position()[0]).toFixed(4).padStart(7, '0') + ((e.position()[0] >= 0) ? 'N' : 'S')) : "UNK") + "</td>";
-      rowFields += "<td>" + ((e.position() != null) ? (Math.abs(e.position()[1]).toFixed(4).padStart(8, '0') + ((e.position()[1] >= 0) ? 'E' : 'W')) : "UNK") + "</td>";
+      rowFields += "<td>" + ((e.name != null && e.name != "") ? ("<a href='https://flightaware.com/live/flight/" + e.name + "' target='_blank'>" + e.name + "</a>") : "---") + "</td>";
+      rowFields += "<td class='" + getSquawkColor(e.squawk) + "'>" + ((e.squawk != null) ? e.squawk : "---") + "</td>";
+      rowFields += "<td>" + ((e.category != null) ? e.category : "---") + "</td>";
+      rowFields += "<td>" + ((e.position() != null) ? (Math.abs(e.position()[0]).toFixed(4).padStart(7, '0') + ((e.position()[0] >= 0) ? 'N' : 'S')) : "---") + "</td>";
+      rowFields += "<td>" + ((e.position() != null) ? (Math.abs(e.position()[1]).toFixed(4).padStart(8, '0') + ((e.position()[1] >= 0) ? 'E' : 'W')) : "---") + "</td>";
       console.log(e.altitude);
-      rowFields += "<td>" + ((e.altitude != null) ? (e.altitude.toFixed(0) + altRateSymb) : "UNK") + "</td>";
-      rowFields += "<td>" + ((e.heading != null) ? e.heading.toFixed(0) : "UNK") + "</td>";
-      rowFields += "<td>" + ((e.speed != null) ? e.speed.toFixed(0) : "UNK") + "</td>";
+      rowFields += "<td>" + ((e.altitude != null) ? (e.altitude.toFixed(0) + altRateSymb) : "---") + "</td>";
+      rowFields += "<td>" + ((e.heading != null) ? e.heading.toFixed(0) : "---") + "</td>";
+      rowFields += "<td>" + ((e.speed != null) ? e.speed.toFixed(0) : "---") + "</td>";
       rowFields += "<td>" + e.rssi + "</td>";
       rowFields += "<td class='" + getAgeColor(e.posUpdateTime) + "'>" + ((e.posUpdateTime != null) ? moment().diff(e.posUpdateTime, 'seconds') : "N/A") + "</td>";
       rowFields += "<td class='" + getAgeColor(e.updateTime) + "'>" + ((e.updateTime != null) ? moment().diff(e.updateTime, 'seconds') : "N/A") + "</td>";
