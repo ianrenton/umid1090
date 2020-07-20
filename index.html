@@ -28,6 +28,12 @@
             <div class="centre">Tracker Status: <span id="trackerstatus" class="trackerstatuserror">CONNECTING...</span></div>
             <div id="tracktablearea"><table id="tracktable"></table></div>
             <div id="buttons"><button id="deselect" onclick="deselect()" disabled>Deselect Track</button> <button onclick="defaultZoom()">Default View</button></div>
+            <div id="checkboxes">
+                <input type="checkbox" id="followSelected" name="followSelected">
+                <label for="followSelected"> Follow Selected</label>
+                <input type="checkbox" id="detailedmap" name="detailedmap" checked="true">
+                <label for="detailedmap"> Extended Map Symbol Info</label>
+            </div>
         </div>
         <div id="map"></div>
         <script src="code.js"></script>

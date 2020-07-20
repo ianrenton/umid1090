@@ -43,6 +43,10 @@ div#buttons {
     margin-top: 1.5em;
     text-align: center;
 }
+div#checkboxes {
+    margin-top: 0.5em;
+    text-align: center;
+}
 div#mobileswitcher {
     display: none;
     position: absolute;

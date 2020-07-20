@@ -83,6 +83,8 @@ var CATEGORY_SYMBOLS = new Map([
 ]);
 var entities = new Map(); // hex -> Entity
 var selectedEntityHex = "";
+var followSelected = false;
+var detailedMap = true;
 
 
 /////////////////////////////
@@ -180,14 +182,14 @@ class Entity {
     // Generate full symbol for display
     var mysymbol = new ms.Symbol(symbol, {
       size: 35,
-      staffComments: this.desc1.toUpperCase(),
-      additionalInformation: this.desc2.toUpperCase(),
+      staffComments: detailedMap ? this.desc1.toUpperCase() : "",
+      additionalInformation: detailedMap ? this.desc2.toUpperCase() : "",
       direction: (this.heading != null) ? this.heading : "",
-      altitudeDepth: (this.altitude != null) ? (this.altitude.toFixed(0) + "FT") : "",
-      speed: (this.speed != null) ? (this.speed.toFixed(0) + "KTS") : "",
+      altitudeDepth: (this.altitude != null && detailedMap) ? (this.altitude.toFixed(0) + "FT") : "",
+      speed: (this.speed != null && detailedMap) ? (this.speed.toFixed(0) + "KTS") : "",
       type: (this.name != null && this.name != "") ? this.name.toUpperCase() : "HEX " + this.hex.toUpperCase(),
-      dtg: ((this.fixed || this.posUpdateTime == null) ? "" : this.posUpdateTime.utc().format("DDHHmmss[Z]MMMYY").toUpperCase()),
-      location: Math.abs(lat).toFixed(4).padStart(7, '0') + ((lat >= 0) ? 'N' : 'S') + Math.abs(lon).toFixed(4).padStart(8, '0') + ((lon >= 0) ? 'E' : 'W')
+      dtg: ((!this.fixed && this.posUpdateTime != null && detailedMap) ? this.posUpdateTime.utc().format("DDHHmmss[Z]MMMYY").toUpperCase() : ""),
+      location: detailedMap ? (Math.abs(lat).toFixed(4).padStart(7, '0') + ((lat >= 0) ? 'N' : 'S') + Math.abs(lon).toFixed(4).padStart(8, '0') + ((lon >= 0) ? 'E' : 'W')) : ""
     });
     mysymbol = mysymbol.setOptions({
       size: 30,
@@ -234,7 +236,7 @@ class Entity {
   // reported positions
   trail() {
     return L.polyline(this.positionHistory, {
-      color: ((this.hex == selectedEntityHex) ? '#4581CC' : '#007F0E')
+      color: (this.entitySelected() ? '#4581CC' : '#007F0E')
     });
   }
 
@@ -245,7 +247,7 @@ class Entity {
     if (this.positionHistory.length > 0 && this.oldEnoughToDR()) {
       var points = [this.position(), this.drPosition()];
       return L.polyline(points, {
-        color: ((this.hex == selectedEntityHex) ? '#4581CC' : '#007F0E'),
+        color: (this.entitySelected() ? '#4581CC' : '#007F0E'),
         dashArray: "5 5"
       });
     } else {
@@ -443,6 +445,11 @@ async function updateMap() {
       markersLayer.addLayer(e.drTrail());
     }
   });
+
+  // Follow selected entity
+  if (followSelected) {
+    panTo(selectedEntityHex);
+  }
 }
 
 // Update track table
@@ -588,6 +595,20 @@ L.tileLayer(OPENAIP_URL, {
 // Clicking selects the entity
 $(document).on("click", "tr", function(e) {
   tableSelect($(e.currentTarget).attr("name"));
+});
+
+
+/////////////////////////////
+//     CHECKBOX SETUP      //
+/////////////////////////////
+
+
+$("#followSelected").click(function() {
+    followSelected = $(this).is(':checked');
+});
+$("#detailedmap").click(function() {
+    detailedMap = $(this).is(':checked');
+    updateMap();
 });
 
 
