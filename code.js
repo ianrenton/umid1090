@@ -81,6 +81,7 @@ var CATEGORY_SYMBOLS = new Map([
   ["C2", "SUGP------"],
   ["C3", "SUGP------"]
 ]);
+var EMERGENCY_SQUAWKS = ["7500", "7600", "7700"];
 var entities = new Map(); // hex -> Entity
 var selectedEntityHex = "";
 
@@ -474,10 +475,11 @@ async function updateTable() {
       // Generate table row
       var rowFields = "<td><a href='https://flightaware.com/live/modes/" + e.hex + "/redirect' target='_blank'>" + e.hex.toUpperCase() + "</a></td>";
       rowFields += "<td>" + ((e.name != null) ? "<a href='https://flightaware.com/live/flight/" + e.name + "' target='_blank'>" + e.name + "</a>" : "UNK") + "</td>";
-      rowFields += "<td>" + ((e.squawk != null) ? e.squawk : "UNK") + "</td>";
+      rowFields += "<td class='" + getSquawkColor(e.squawk) + "'>" + ((e.squawk != null) ? e.squawk : "UNK") + "</td>";
       rowFields += "<td>" + ((e.category != null) ? e.category : "UNK") + "</td>";
       rowFields += "<td>" + ((e.position() != null) ? (Math.abs(e.position()[0]).toFixed(4).padStart(7, '0') + ((e.position()[0] >= 0) ? 'N' : 'S')) : "UNK") + "</td>";
       rowFields += "<td>" + ((e.position() != null) ? (Math.abs(e.position()[1]).toFixed(4).padStart(8, '0') + ((e.position()[1] >= 0) ? 'E' : 'W')) : "UNK") + "</td>";
+      console.log(e.altitude);
       rowFields += "<td>" + ((e.altitude != null) ? (e.altitude.toFixed(0) + altRateSymb) : "UNK") + "</td>";
       rowFields += "<td>" + ((e.heading != null) ? e.heading.toFixed(0) : "UNK") + "</td>";
       rowFields += "<td>" + ((e.speed != null) ? e.speed.toFixed(0) : "UNK") + "</td>";
@@ -557,6 +559,14 @@ function getAgeColor(time) {
   return "red";
 }
 
+// Utility function to get a table cell colour class depending on squawk code
+function getSquawkColor(squawk) {
+  if (squawk != null && EMERGENCY_SQUAWKS.includes(squawk)) {
+    return "red";
+  } else {
+    return "";
+  }
+}
 
 /////////////////////////////
 //       MAP SETUP         //
