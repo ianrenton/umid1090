@@ -479,7 +479,6 @@ async function updateTable() {
       rowFields += "<td>" + ((e.category != null) ? e.category : "---") + "</td>";
       rowFields += "<td>" + ((e.position() != null) ? (Math.abs(e.position()[0]).toFixed(4).padStart(7, '0') + ((e.position()[0] >= 0) ? 'N' : 'S')) : "---") + "</td>";
       rowFields += "<td>" + ((e.position() != null) ? (Math.abs(e.position()[1]).toFixed(4).padStart(8, '0') + ((e.position()[1] >= 0) ? 'E' : 'W')) : "---") + "</td>";
-      console.log(e.altitude);
       rowFields += "<td>" + ((e.altitude != null) ? (e.altitude.toFixed(0) + altRateSymb) : "---") + "</td>";
       rowFields += "<td>" + ((e.heading != null) ? e.heading.toFixed(0) : "---") + "</td>";
       rowFields += "<td>" + ((e.speed != null) ? e.speed.toFixed(0) : "---") + "</td>";
