@@ -137,6 +137,10 @@ span.trackerstatusgood {
 span.trackerstatuswarning {
     color: orange;
 }
+span.trackerstatuswaiting {
+    animation: blinker 1s linear infinite;
+    color: orange;
+}
 span.trackerstatuserror {
     animation: blinker 1s linear infinite;
     color: red;

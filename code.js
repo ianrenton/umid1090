@@ -7,8 +7,8 @@
 // Select the alternate URL by appending ?alt=true to the URL for UMID1090.
 // Normal users won't do this and will therefore use the main public URL, but you
 // can bookmark the "alt" version to always use your LAN address for testing.
-var DUMP1090_URL = "http://mciserver.zapto.org/dump1090-fa/data/aircraft.json";
-var DUMP1090_URL_ALT = "http://192.168.1.241:8081/dump1090-fa/data/aircraft.json";
+var DUMP1090_URL = "http://mciserver.zapto.org/dump1090-fa/";
+var DUMP1090_URL_ALT = "http://192.168.1.241:8081/dump1090-fa/";
 
 // Map server URLs - if re-using this code you will need to provide your own Mapbox
 // access token in the Mapbox URL. You can still use my style.
@@ -83,6 +83,7 @@ var CATEGORY_SYMBOLS = new Map([
 ]);
 var EMERGENCY_SQUAWKS = ["7500", "7600", "7700"];
 var entities = new Map(); // hex -> Entity
+var historyStore = [];
 var clockOffset = 0; // Local PC time (UTC) minus data time. Used to prevent data appearing as too new or old if the local PC clock is off.
 var selectedEntityHex = "";
 var followSelected = false;
@@ -263,9 +264,54 @@ class Entity {
 //       FUNCTIONS         //
 /////////////////////////////
 
-// JSON data retrieval method
-function requestData() {
-  var url = dump1090url + "?_=" + (new Date()).getTime();
+// JSON history retrieval method (only called once at startup). This just
+// queries for history data and populates the historyStore variable, this
+// is then later used in processHistory().
+function requestHistory() {
+  var url = dump1090url + "/data/receiver.json";
+  $.getJSON( url, function( data ) {
+    // Got receiver metadata. Set tracker status
+    $("span#trackerstatus").html("ONLINE, LOADING HISTORY...");
+    setTrackerStatus("waiting");
+    // Iterate through all history files. This could be up to 120!
+    var historyFileCount = data.history;
+    var i;
+    for (i = 0; i < historyFileCount; i++) {
+      var url = dump1090url + "/data/history_" + i + ".json";
+      $.getJSON( url, async function( data ) {
+        // Got history data, store it. We don't want to process it immediately
+        // because history data is not ordered; we need to store it first then
+        // order it as soon as we think all the data will have arrived.
+        historyStore.push(data);
+      });
+    }
+  });
+}
+
+// Take whatever history data we have managed to acquire at this point,
+// sort by date, push all the updates into the main data store, delete anything
+// old. After this function finishes, we are then ready to start receiving
+// live data on top of the historical data.
+function processHistory() {
+  $("span#trackerstatus").html("ONLINE, PROCESSING HISTORY...");
+
+  // History data could have come in any order, so first sort it.
+  historyStore.sort((a, b) => (a.now > b.now) ? 1 : -1);
+  
+  // Now use it
+  for (item of historyStore) {
+    handleData(item, false);
+  }
+
+  // Finally, call updateAll which will drop old tracks and update displays.
+  updateAll();
+}
+
+// JSON live data retrieval method. This is the main data request
+// function which gets called every 10 seconds to update the internal
+// data store
+function requestLiveData() {
+  var url = dump1090url + "/data/aircraft.json?_=" + (new Date()).getTime();
   $.ajax({
     url: url,
     dataType: 'json',
@@ -285,18 +331,13 @@ function requestData() {
 
 // Handle successful receive of data
 async function handleSuccess(result) {
-
   // Set tracker status
   if (result.aircraft.length > 0) {
     $("span#trackerstatus").html("ONLINE, TRACKING " + result.aircraft.length + " AIRCRAFT");
-    $("span#trackerstatus").removeClass("trackerstatuserror");
-    $("span#trackerstatus").removeClass("trackerstatuswarning");
-    $("span#trackerstatus").addClass("trackerstatusgood");
+    setTrackerStatus("good");
   } else {
     $("span#trackerstatus").html("ONLINE, NO AIRCRAFT DETECTED");
-    $("span#trackerstatus").removeClass("trackerstatuserror");
-    $("span#trackerstatus").addClass("trackerstatuswarning");
-    $("span#trackerstatus").removeClass("trackerstatusgood");
+    setTrackerStatus("warning");
   }
 
   // Update the data store
@@ -306,7 +347,7 @@ async function handleSuccess(result) {
 // Update the internal data store with the provided data
 function handleData(result, live) {
   // Debug
-  console.log(JSON.stringify(result));
+  //console.log(JSON.stringify(result));
 
   // Update clock offset (local PC time - data time) - only if data
   // is live rather than historic data being loaded in
@@ -416,9 +457,7 @@ function handleData(result, live) {
 // Handle a failure to receive data
 async function handleFailure() {
   $("span#trackerstatus").html("TRACKER OFFLINE");
-  $("span#trackerstatus").removeClass("trackerstatusgood");
-  $("span#trackerstatus").removeClass("trackerstatuswarning");
-  $("span#trackerstatus").addClass("trackerstatuserror");
+    setTrackerStatus("error");
 }
 
 // Adjust entities if they need to have their symbol changed or be dropped,
@@ -595,6 +634,19 @@ function getSquawkColor(squawk) {
   }
 }
 
+// Sets the tracker status CSS class to the provided one, removing any
+// others
+function setTrackerStatus(newStatus) {
+  var options = ["waiting", "good", "warning", "error"];
+  for (o of options) {
+    if (o == newStatus) {
+      $("span#trackerstatus").addClass("trackerstatus" + o);
+    } else {
+      $("span#trackerstatus").removeClass("trackerstatus" + o);
+    }
+  }
+}
+
 // Utility function to get local PC time with data time offset applied.
 function getTimeInServerRefFrame() {
   return moment().subtract(clockOffset, "seconds");
@@ -681,9 +733,17 @@ if (urlParams.get("alt") == "true") {
   dump1090url = DUMP1090_URL_ALT;
 }
 
+// Grab the history data to start with. The request calls are asynchronous,
+// so we have an additional call after 9 seconds (just before live data is
+// first requested) to unpack and use whatever history data we have at that
+// point.
+requestHistory();
+setTimeout(processHistory, 9000);
+
 // Set up the timed data request & update threads.
-// Request data now and every 10 sec, this also updates the table at that point
+// Request data every 10 sec, this also updates the table at that point -
 // but additionally update the table every second so you see the data age counting
-requestData();
-setInterval(requestData, 10000);
+// First data request happens after 10 seconds, giving this time to fetch all the
+// history files
+setInterval(requestLiveData, 10000);
 setInterval(updateTable, 1000);
