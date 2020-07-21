@@ -287,7 +287,6 @@ async function handleData(result) {
   console.log(JSON.stringify(result));
 
   // Set tracker status
-  currentServerWorkedOnce = true;
   if (result.aircraft.length > 0) {
     $("span#trackerstatus").html("ONLINE, TRACKING " + result.aircraft.length + " AIRCRAFT");
     $("span#trackerstatus").removeClass("trackerstatuserror");
