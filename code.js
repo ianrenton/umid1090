@@ -563,6 +563,13 @@ async function panTo(hex) {
 
 // Go back to starting view
 function defaultZoom() {
+  // If on mobile and the map is hidden, setView won't work properly,
+  // so switch to the map first
+  if ($('#map').is(':hidden'))
+  {
+    $("div#tote").toggle();
+    $("div#map").toggle();
+  }
   map.setView(START_LAT_LON, START_ZOOM);
 }
 
