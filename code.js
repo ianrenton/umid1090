@@ -87,6 +87,7 @@ var historyStore = [];
 var clockOffset = 0; // Local PC time (UTC) minus data time. Used to prevent data appearing as too new or old if the local PC clock is off.
 var selectedEntityHex = "";
 var followSelected = false;
+var snailTrails = true;
 var detailedMap = true;
 
 
@@ -491,14 +492,16 @@ async function updateMap() {
   });
 
   // Add snail trails to map
-  entities.forEach(function(e) {
-    markersLayer.addLayer(e.trail());
-  });
-  entities.forEach(function(e) {
-    if (e.drTrail() != null) {
-      markersLayer.addLayer(e.drTrail());
-    }
-  });
+  if (snailTrails) {
+    entities.forEach(function(e) {
+      markersLayer.addLayer(e.trail());
+    });
+    entities.forEach(function(e) {
+      if (e.drTrail() != null) {
+        markersLayer.addLayer(e.drTrail());
+      }
+    });
+  }
 
   // Follow selected entity
   if (followSelected) {
@@ -692,6 +695,10 @@ $(document).on("click", "tr", function(e) {
 
 $("#followSelected").click(function() {
     followSelected = $(this).is(':checked');
+});
+$("#snailTrails").click(function() {
+    snailTrails = $(this).is(':checked');
+    updateMap();
 });
 $("#detailedmap").click(function() {
     detailedMap = $(this).is(':checked');
