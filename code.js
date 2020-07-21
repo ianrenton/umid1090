@@ -81,6 +81,24 @@ var CATEGORY_SYMBOLS = new Map([
   ["C2", "SUGP------"],
   ["C3", "SUGP------"]
 ]);
+var AIRLINE_CODE_SYMBOLS = new Map([
+  ["UKP", "SUAPMHR---"],
+  ["RRR", "SFAPMFC-----"],
+  ["ASCOT", "SFAPMFC-----"]
+]);
+// From https://en.wikipedia.org/wiki/List_of_airline_codes. I've just added common
+// ones for my area because there are a lot of duplicates across different countries
+var AIRLINE_CODES = new Map([
+  ["RYR", "Ryanair"],
+  ["BAW", "British Airways"],
+  ["EZY", "EasyJet"],
+  ["EXS", "Jet2"],
+  ["KLM", "KLM"],
+  ["TAM", "LATAM Brasil"],
+  ["UKP", "Police"],
+  ["RRR", "Royal Air Force"],
+  ["ASCOT", "Royal Air Force"]
+]);
 var EMERGENCY_SQUAWKS = ["7500", "7600", "7700"];
 var entities = new Map(); // hex -> Entity
 var historyStore = [];
@@ -402,9 +420,22 @@ function handleData(result, live) {
       }
     }
 
+    // Airline code
+    var airlineCode = null;
+    var airline = "";
+    if (a.flight != null && a.flight != "") {
+      var matches = /^[a-zA-Z]*/.exec(a.flight.trim());
+      airlineCode = matches[0].toUpperCase();
+      if (AIRLINE_CODES.has(airlineCode)) {
+        airline = AIRLINE_CODES.get(airlineCode);
+      }
+    }
+
     // Implied symbol
     var symbol = CIVILIAN_AIRCRAFT_SYMBOL;
-    if (a.category != null && CATEGORY_SYMBOLS.has(a.category)) {
+    if (airlineCode != null && AIRLINE_CODE_SYMBOLS.has(airlineCode)) {
+      symbol = CATEGORY_SYMBOLS.get(airlineCode);
+    } else if (a.category != null && CATEGORY_SYMBOLS.has(a.category)) {
       symbol = CATEGORY_SYMBOLS.get(a.category);
     }
     // Implied category description
@@ -413,10 +444,11 @@ function handleData(result, live) {
       catDescrip = a.category + " " + CATEGORY_DESCRIPTIONS.get(a.category);
     }
 
+
     // Now create or update the entity.
     if (!entities.has(a.hex)) {
       // Doesn't exist, so create
-      entities.set(a.hex, new Entity(a.hex, false, a.lat, a.lon, bestHeading, bestAlt, bestAltRate, bestSpeed, a.flight, a.squawk, a.category, symbol, catDescrip, "", a.rssi, seen, posSeen));
+      entities.set(a.hex, new Entity(a.hex, false, a.lat, a.lon, bestHeading, bestAlt, bestAltRate, bestSpeed, a.flight, a.squawk, a.category, symbol, catDescrip, airline, a.rssi, seen, posSeen));
     } else {
       // Exists, so update
       var e = entities.get(a.hex);
@@ -445,6 +477,9 @@ function handleData(result, live) {
         e.category = a.category;
         e.desc1 = catDescrip;
         e.symbol = symbol;
+      }
+      if (airline != null) {
+        e.desc2 = airline;
       }
       e.rssi = a.rssi;
       e.updateTime = seen;
