@@ -83,6 +83,7 @@ var CATEGORY_SYMBOLS = new Map([
 ]);
 var EMERGENCY_SQUAWKS = ["7500", "7600", "7700"];
 var entities = new Map(); // hex -> Entity
+var clockOffset = 0; // Local PC time (UTC) minus data time. Used to prevent data appearing as too new or old if the local PC clock is off.
 var selectedEntityHex = "";
 var followSelected = false;
 var detailedMap = true;
@@ -133,7 +134,7 @@ class Entity {
   drPosition() {
     if (this.position() != null && this.posUpdateTime != null && this.speed != null && this.heading != null) {
       // Can dead reckon
-      var timePassedSec = moment().diff(this.posUpdateTime) / 1000.0;
+      var timePassedSec = getTimeInServerRefFrame().diff(this.posUpdateTime) / 1000.0;
       var speedMps = this.speed * KNOTS_TO_MPS;
       var newPos = destVincenty(this.position()[0], this.position()[1], this.heading, timePassedSec * speedMps);
       return newPos;
@@ -155,12 +156,12 @@ class Entity {
   // Is the track old enough that we should display the dead reckoned
   // position instead of the real one?
   oldEnoughToDR() {
-    return !this.fixed && this.posUpdateTime != null && moment().diff(this.posUpdateTime) > DEAD_RECKON_TIME_MS;
+    return !this.fixed && this.posUpdateTime != null && getTimeInServerRefFrame().diff(this.posUpdateTime) > DEAD_RECKON_TIME_MS;
   }
 
   // Is the track old enough that we should drop it?
   oldEnoughToDelete() {
-    return !this.fixed && moment().diff(this.updateTime) > DROP_TRACK_TIME_MS;
+    return !this.fixed && getTimeInServerRefFrame().diff(this.updateTime) > DROP_TRACK_TIME_MS;
   }
 
   // Generate a Milsymbol icon for the entity
@@ -270,6 +271,7 @@ function requestData() {
     dataType: 'json',
     timeout: 9000,
     success: async function(result) {
+      handleSuccess(result);
       handleData(result);
     },
     error: function() {
@@ -282,9 +284,7 @@ function requestData() {
 }
 
 // Handle successful receive of data
-async function handleData(result) {
-  // Debug
-  console.log(JSON.stringify(result));
+async function handleSuccess(result) {
 
   // Set tracker status
   if (result.aircraft.length > 0) {
@@ -297,6 +297,21 @@ async function handleData(result) {
     $("span#trackerstatus").removeClass("trackerstatuserror");
     $("span#trackerstatus").addClass("trackerstatuswarning");
     $("span#trackerstatus").removeClass("trackerstatusgood");
+  }
+
+  // Update the data store
+  handleData(result, true);
+}
+
+// Update the internal data store with the provided data
+function handleData(result, live) {
+  // Debug
+  console.log(JSON.stringify(result));
+
+  // Update clock offset (local PC time - data time) - only if data
+  // is live rather than historic data being loaded in
+  if (live) {
+    clockOffset = moment().diff(moment.unix(result.now).utc(), 'seconds');
   }
 
   // Add/update aircraft in entity list
@@ -333,13 +348,13 @@ async function handleData(result) {
     }
 
     // Update time adjustment
-    var seen = moment();
+    var seen = moment.unix(result.now).utc();
     if (a.seen != null) {
       seen = seen.subtract(a.seen, 'seconds');
     }
     var posSeen = null;
     if (a.lat != null) {
-      posSeen = moment();
+      posSeen = moment.unix(result.now).utc();
       if (a.seen_pos != null) {
         posSeen = posSeen.subtract(a.seen_pos, 'seconds');
       }
@@ -489,8 +504,8 @@ async function updateTable() {
       rowFields += "<td>" + ((e.heading != null) ? e.heading.toFixed(0) : "---") + "</td>";
       rowFields += "<td>" + ((e.speed != null) ? e.speed.toFixed(0) : "---") + "</td>";
       rowFields += "<td>" + e.rssi + "</td>";
-      rowFields += "<td class='" + getAgeColor(e.posUpdateTime) + "'>" + ((e.posUpdateTime != null) ? moment().diff(e.posUpdateTime, 'seconds') : "N/A") + "</td>";
-      rowFields += "<td class='" + getAgeColor(e.updateTime) + "'>" + ((e.updateTime != null) ? moment().diff(e.updateTime, 'seconds') : "N/A") + "</td>";
+      rowFields += "<td class='" + getAgeColor(e.posUpdateTime) + "'>" + ((e.posUpdateTime != null) ? getTimeInServerRefFrame().diff(e.posUpdateTime, 'seconds') : "N/A") + "</td>";
+      rowFields += "<td class='" + getAgeColor(e.updateTime) + "'>" + ((e.updateTime != null) ? getTimeInServerRefFrame().diff(e.updateTime, 'seconds') : "N/A") + "</td>";
       var row = $('<tr name=' + e.hex + '>').html(rowFields);
       if (e.entitySelected()) {
         row.addClass("selected");
@@ -554,7 +569,7 @@ function defaultZoom() {
 // Utility function to get a table cell colour class depending on data age
 function getAgeColor(time) {
   if (time != null) {
-    var age = moment().diff(time);
+    var age = getTimeInServerRefFrame().diff(time);
     if (age <= DEAD_RECKON_TIME_MS) {
       return "green";
     } else if (age <= DROP_TRACK_TIME_MS) {
@@ -571,6 +586,11 @@ function getSquawkColor(squawk) {
   } else {
     return "";
   }
+}
+
+// Utility function to get local PC time with data time offset applied.
+function getTimeInServerRefFrame() {
+  return moment().subtract(clockOffset, "seconds");
 }
 
 /////////////////////////////
