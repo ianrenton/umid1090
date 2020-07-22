@@ -46,9 +46,12 @@ var AIRLINE_CODES = new Map([
   ["SWN", "West Air Sweden"],
   ["QTR", "Qatar Airways"],
   ["VLG", "Vueling Airlines"],
+  ["EIN", "Aer Lingus"],
   ["UKP", "Police"],
   ["RRR", "Royal Air Force"],
   ["ASCOT", "Royal Air Force"],
+  ["COMET", "Royal Air Force"],
+  ["NOH", "RAF Northolt 32 Sqdn"],
   ["RCH", "U.S. Air Mobility Command"]
 ]);
 // Symbol overrides for certain airline codes, principally military
@@ -56,6 +59,8 @@ var AIRLINE_CODE_SYMBOLS = new Map([
   ["UKP", "SUAPMHR---"],
   ["RRR", "SFAPMFC-----"],
   ["ASCOT", "SFAPMFC-----"],
+  ["COMET", "SFAPMFC-----"],
+  ["NOH", "SFAPM-------"],
   ["RCH", "SFAPMFC-----"]
 ]);
 
@@ -70,24 +75,24 @@ var BASE_STATION_SYMBOL = "SFGPUUS-----";
 var AIRPORT_SYMBOL = "SFGPIBA---H";
 var CATEGORY_DESCRIPTIONS = new Map([
   ["A0", "Aircraft"],
-  ["A1", "Light Aircraft"],
-  ["A2", "Small Aircraft"],
-  ["A3", "Large Aircraft"],
-  ["A4", "High Vortex Aircraft"],
-  ["A5", "Heavy Aircraft"],
-  ["A6", "High Perf Aircraft"],
+  ["A1", "Light"],
+  ["A2", "Small"],
+  ["A3", "Large"],
+  ["A4", "High Vortex"],
+  ["A5", "Heavy"],
+  ["A6", "High Perf"],
   ["A7", "Rotary Wing"],
   ["B0", "Misc Air"],
-  ["B1", "Glider/sailplane"],
+  ["B1", "Glider"],
   ["B2", "Lighter-than-Air"],
-  ["B3", "Parachutist/Skydiver"],
-  ["B4", "Ultralight/hang/paraglider"],
+  ["B3", "Para"],
+  ["B4", "Ultralight"],
   ["B5", "Reserved"],
   ["B6", "UAV"],
   ["B7", "Space vehicle"],
   ["C0", "Ground Track"],
-  ["C1", "Emergency Vehicle"],
-  ["C2", "Service Vehicle"],
+  ["C1", "Emergency Veh."],
+  ["C2", "Service Veh."],
   ["C3", "Obstruction"]
 ]);
 var CATEGORY_SYMBOLS = new Map([
@@ -298,9 +303,9 @@ class Entity {
       var airlineCode = this.airlineCode();
       var symbol = CIVILIAN_AIRCRAFT_SYMBOL;
       if (airlineCode != null && AIRLINE_CODE_SYMBOLS.has(airlineCode)) {
-        symbol = CATEGORY_SYMBOLS.get(airlineCode);
+        symbol = AIRLINE_CODE_SYMBOLS.get(airlineCode);
       } else if (this.category != null && CATEGORY_SYMBOLS.has(this.category)) {
-        symbol = CATEGORY_SYMBOLS.get(a.category);
+        symbol = CATEGORY_SYMBOLS.get(this.category);
       }
 
       // Change symbol to "anticipated" if dead reckoning
@@ -523,6 +528,12 @@ function requestLiveData() {
       // will already be updated every second in its own thread.
       dropTimedOutAircraft();
       updateMap();
+      // On first fetch, update the table since the separate table updater thread
+      // won't be running yet. Subsequently the thread takes over so we don't need
+      // to do it here.
+      if (firstFetch) {
+        updateTable();
+      }
       firstFetch = false;
     }
   });
