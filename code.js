@@ -436,7 +436,7 @@ class Entity {
   // last reported position with the current dead reckoned
   // position, or null if not dead reckoning.
   drTrail() {
-    if (this.positionHistory.length > 0 && this.oldEnoughToDR()) {
+    if (this.positionHistory.length > 0 && this.oldEnoughToDR() && this.drPosition() != null) {
       var points = [this.position(), this.drPosition()];
       return L.polyline(points, {
         color: (this.entitySelected() ? '#4581CC' : '#007F0E'),
