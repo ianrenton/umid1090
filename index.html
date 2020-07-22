@@ -35,6 +35,16 @@
                 <label for="detailedmap"> Extended Map Symbol Info</label>
             </div>
             <div id="dropdowns">
+                <label for="refreshTime">Update data every:</label>
+                <select id="refreshTime">
+                    <option value="1">1 second</option>
+                    <option value="5">5 seconds</option>
+                    <option value="10" selected="selected">10 seconds</option>
+                    <option value="20">20 seconds</option>
+                    <option value="30">30 seconds</option>
+                    <option value="60">1 minute</option>
+                </select>
+                <br/>
                 <label for="snailTrails">Snail Trails:</label>
                 <select id="snailTrails">
                     <option value="0">None</option>
@@ -61,7 +71,7 @@
                     <option value="300">5 minutes</option>
                     <option value="999999">Never</option>
                 </select>
-                <label for="dropTrackTime">Drop track after:</label>
+                <label for="dropTrackTime" style="padding-left: 1em;">Drop track after:</label>
                 <select id="dropTrackTime">
                     <option value="60">1 minute</option>
                     <option value="120">2 minutes</option>

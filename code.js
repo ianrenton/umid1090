@@ -129,6 +129,7 @@ var CATEGORY_SYMBOLS = new Map([
 var EMERGENCY_SQUAWKS = ["7500", "7600", "7700"];
 var entities = new Map(); // hex -> Entity
 var historyStore = [];
+var dataRefreshIntervalMS = 10000;
 var clockOffset = 0; // Local PC time (UTC) minus data time. Used to prevent data appearing as too new or old if the local PC clock is off.
 var selectedEntityHex = "";
 var snailTrailLength = 500;
@@ -559,6 +560,8 @@ function requestLiveData() {
         updateTable();
       }
       firstFetch = false;
+      // Request the next run of the request at the defined interval.
+      setTimeout(requestLiveData, dataRefreshIntervalMS);
     }
   });
 }
@@ -847,6 +850,10 @@ $("#snailTrailLength").change(function() {
   entities.forEach(function(e) { e.trimSnailTrail(); });
   updateMap();
 });
+$("#refreshTime").change(function() {
+  dataRefreshIntervalMS = parseInt($(this).val()) * 1000;
+  requestLiveData();
+});
 $("#deadReckonTime").change(function() {
   deadReckonTimeMS = parseInt($(this).val()) * 1000;
   updateMap();
@@ -929,11 +936,13 @@ requestHistory();
 setTimeout(processHistory, 9000);
 
 // Set up the timed data request & update threads.
-// Request data every 10 sec, this also updates the table at that point -
-// but additionally update the table every second so you see the data age counting
-// First data request happens after 10 seconds, giving this time to fetch all the
-// history files
-setInterval(requestLiveData, 10000);
+// The timed data update is done as a timeout not an interval, and it calls
+// its own setTimeout after it finishes, to trigger timed requests. It's
+// done this way so we can change the polling interval interactively.
+setTimeout(requestLiveData, dataRefreshIntervalMS);
+// The table updater is done as an interval, every second, but not
+// *starting* until 10 seconds has elapsed, so it gives the history
+// processing time to finish.
 setTimeout(function() {
   setInterval(updateTable, 1000)
 }, 10000);
