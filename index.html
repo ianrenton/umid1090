@@ -31,10 +31,16 @@
             <div id="checkboxes">
                 <input type="checkbox" id="followSelected" name="followSelected">
                 <label for="followSelected"> Follow Selected</label>
-                <input type="checkbox" id="snailTrails" name="snailTrails" checked="true">
-                <label for="snailTrails"> Snail Trails</label>
                 <input type="checkbox" id="detailedmap" name="detailedmap" checked="true">
                 <label for="detailedmap"> Extended Map Symbol Info</label>
+            </div>
+            <div id="dropdowns">
+                <label for="snailTrails">Snail Trails:</label>
+                <select id="snailTrails">
+                    <option value="0">None</option>
+                    <option value="1">Only Selected</option>
+                    <option value="2" selected="selected">All Tracks</option>
+                </select>
             </div>
         </div>
         <div id="map"></div>

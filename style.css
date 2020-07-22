@@ -47,6 +47,10 @@ div#checkboxes {
     margin-top: 0.5em;
     text-align: center;
 }
+div#dropdowns {
+    margin-top: 0.7em;
+    text-align: center;
+}
 div#mobileswitcher {
     display: none;
     position: absolute;

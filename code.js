@@ -47,6 +47,9 @@ var AIRLINE_CODES = new Map([
   ["QTR", "Qatar Airways"],
   ["VLG", "Vueling Airlines"],
   ["EIN", "Aer Lingus"],
+  ["WUK", "Wizz Air"],
+  ["ETP", "Empire Test Pilots"],
+  ["MLT", "Maleth Aero"],
   ["UKP", "Police"],
   ["CG", "Coastguard"],
   ["RRR", "Royal Air Force"],
@@ -126,7 +129,7 @@ var clockOffset = 0; // Local PC time (UTC) minus data time. Used to prevent dat
 var selectedEntityHex = "";
 var firstFetch = true;
 var followSelected = false;
-var snailTrails = true;
+var snailTrailsMode = 2; // 0 = none, 1 = only selected, 2 = all
 var detailedMap = true;
 
 
@@ -607,12 +610,14 @@ async function updateMap() {
   });
 
   // Add snail trails to map
-  if (snailTrails) {
+  if (snailTrailsMode > 0) {
     entities.forEach(function(e) {
-      markersLayer.addLayer(e.trail());
+      if (snailTrailsMode == 2 || e.hex == selectedEntityHex) {
+        markersLayer.addLayer(e.trail());
+      }
     });
     entities.forEach(function(e) {
-      if (e.drTrail() != null) {
+      if ((snailTrailsMode == 2 || e.hex == selectedEntityHex) && e.drTrail() != null) {
         markersLayer.addLayer(e.drTrail());
       }
     });
@@ -810,12 +815,12 @@ $(document).on("click", "tr", function(e) {
 $("#followSelected").click(function() {
   followSelected = $(this).is(':checked');
 });
-$("#snailTrails").click(function() {
-  snailTrails = $(this).is(':checked');
-  updateMap();
-});
 $("#detailedmap").click(function() {
   detailedMap = $(this).is(':checked');
+  updateMap();
+});
+$("#snailTrails").change(function() {
+  snailTrailsMode = parseInt($(this).val());
   updateMap();
 });
 
