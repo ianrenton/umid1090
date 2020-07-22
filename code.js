@@ -42,6 +42,7 @@ var AIRLINE_CODES = new Map([
   ["WGN", "Western Global"],
   ["SWN", "West Air Sweden"],
   ["QTR", "Qatar Airways"],
+  ["VLG", "Vueling Airlines"],
   ["UKP", "Police"],
   ["RRR", "Royal Air Force"],
   ["ASCOT", "Royal Air Force"],
@@ -113,6 +114,7 @@ var entities = new Map(); // hex -> Entity
 var historyStore = [];
 var clockOffset = 0; // Local PC time (UTC) minus data time. Used to prevent data appearing as too new or old if the local PC clock is off.
 var selectedEntityHex = "";
+var firstFetch = true;
 var followSelected = false;
 var snailTrails = true;
 var detailedMap = true;
@@ -472,6 +474,15 @@ function requestHistory() {
 function processHistory() {
   $("span#trackerstatus").html("ONLINE, PROCESSING HISTORY...");
 
+  // At startup we did one initial retrieve of live data so we had a nice display
+  // from the start. Now we have history data to load in which is older. So,
+  // delete the existing live data first.
+  entities.forEach(function(e) {
+    if (e.fixed == false) {
+      entities.delete(e.hex);
+    }
+  });
+
   // History data could have come in any order, so first sort it.
   historyStore.sort((a, b) => (a.now > b.now) ? 1 : -1);
 
@@ -479,7 +490,12 @@ function processHistory() {
   for (item of historyStore) {
     handleData(item, false);
   }
+
+  // Drop anything timed out
   dropTimedOutAircraft();
+
+  // Now trigger retrieval of a new set of live data, to top off the history
+  requestLiveData();
 }
 
 // JSON live data retrieval method. This is the main data request
@@ -507,12 +523,14 @@ function requestLiveData() {
 // Handle successful receive of data
 async function handleSuccess(result) {
   // Set tracker status
-  if (result.aircraft.length > 0) {
-    $("span#trackerstatus").html("ONLINE, TRACKING " + result.aircraft.length + " AIRCRAFT");
-    setTrackerStatus("good");
-  } else {
-    $("span#trackerstatus").html("ONLINE, NO AIRCRAFT DETECTED");
-    setTrackerStatus("warning");
+  if (!firstFetch) {
+    if (result.aircraft.length > 0) {
+      $("span#trackerstatus").html("ONLINE, TRACKING " + result.aircraft.length + " AIRCRAFT");
+      setTrackerStatus("good");
+    } else {
+      $("span#trackerstatus").html("ONLINE, NO AIRCRAFT DETECTED");
+      setTrackerStatus("warning");
+    }
   }
 
   // Update the data store
@@ -553,6 +571,7 @@ async function updateAll() {
   dropTimedOutAircraft();
   updateMap();
   updateTable();
+  firstFetch = false;
 }
 
 // Drop any aircraft too old to be displayed
@@ -831,7 +850,27 @@ if (urlParams.get("alt") == "true") {
   dump1090url = DUMP1090_URL_ALT;
 }
 
-// Grab the history data to start with. The request calls are asynchronous,
+// The loading procedure is quite complex. Dump 1090 provides both history
+// data and live data. We want to load the history data first, so we have
+// as much info (e.g. snail trails) to plot, however it takes a while to
+// load as it can be up to 120 separate requests. So the procedure is:
+// 1) Get a single shot of live data, so the display comes up populated ASAP
+// 2) Update map and table once, at the end of that process.
+// 3) Kick off all the history requests asynchronously
+// 4) Wait 9 seconds
+// 5) Delete the single shot of live data and replace it with the full
+//    history store of data
+// 6) Run another single shot of live data, appending to the end of the
+//    history
+// 7) Update map and table once, at the end of that process.
+// 8) We are now fully up-to-date, so now kick off the two interval
+//    processes that will request new live data every 10 seconds, and
+//    update the table every second.
+
+// First do a one-off live data request so we have something to display.
+requestLiveData();
+
+// Now grab the history data. The request calls are asynchronous,
 // so we have an additional call after 9 seconds (just before live data is
 // first requested) to unpack and use whatever history data we have at that
 // point.
@@ -844,4 +883,6 @@ setTimeout(processHistory, 9000);
 // First data request happens after 10 seconds, giving this time to fetch all the
 // history files
 setInterval(requestLiveData, 10000);
-setInterval(updateTable, 1000);
+setTimeout(function() {
+  setInterval(updateTable, 1000)
+}, 10000);
