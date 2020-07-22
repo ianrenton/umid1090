@@ -38,6 +38,7 @@ var AIRLINE_CODES = new Map([
   ["KLM", "KLM"],
   ["VIR", "Virgin Atlantic"],
   ["AAL", "American Airlines"],
+  ["UAL", "United Airlines"],
   ["TAM", "LATAM Brasil"],
   ["WGN", "Western Global"],
   ["SWN", "West Air Sweden"],
@@ -515,7 +516,12 @@ function requestLiveData() {
       handleFailure();
     },
     complete: function() {
-      updateAll();
+      // Adjust entities if they need to have their symbol changed or be dropped,
+      // then call update on the map. Note no need to update the table here as that
+      // will already be updated every second in its own thread.
+      dropTimedOutAircraft();
+      updateMap();
+      firstFetch = false;
     }
   });
 }
@@ -562,16 +568,6 @@ function handleData(result, live) {
 async function handleFailure() {
   $("span#trackerstatus").html("TRACKER OFFLINE");
   setTrackerStatus("error");
-}
-
-// Adjust entities if they need to have their symbol changed or be dropped,
-// then call updates on the map and table.
-async function updateAll() {
-  // Refresh the display
-  dropTimedOutAircraft();
-  updateMap();
-  updateTable();
-  firstFetch = false;
 }
 
 // Drop any aircraft too old to be displayed
