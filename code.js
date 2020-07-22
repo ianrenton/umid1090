@@ -48,6 +48,7 @@ var AIRLINE_CODES = new Map([
   ["VLG", "Vueling Airlines"],
   ["EIN", "Aer Lingus"],
   ["UKP", "Police"],
+  ["CG", "Coastguard"],
   ["RRR", "Royal Air Force"],
   ["ASCOT", "Royal Air Force"],
   ["COMET", "Royal Air Force"],
@@ -57,6 +58,7 @@ var AIRLINE_CODES = new Map([
 // Symbol overrides for certain airline codes, principally military
 var AIRLINE_CODE_SYMBOLS = new Map([
   ["UKP", "SUAPMHR---"],
+  ["CG", "SFAPMHH-----"],
   ["RRR", "SFAPMFC-----"],
   ["ASCOT", "SFAPMFC-----"],
   ["COMET", "SFAPMFC-----"],
