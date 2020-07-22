@@ -49,6 +49,7 @@ var AIRLINE_CODES = new Map([
   ["VLG", "Vueling Airlines"],
   ["EIN", "Aer Lingus"],
   ["WUK", "Wizz Air"],
+  ["TAP", "TAP Air Portugal"],
   ["FDX", "FedEx"],
   ["UPS", "UPS"],
   ["ETP", "Empire Test Pilots"],
@@ -61,6 +62,7 @@ var AIRLINE_CODES = new Map([
   ["COMET", "Royal Air Force"],
   ["NOH", "RAF Northolt 32 Sqdn"],
   ["AAC", "Army Air Corps"],
+  ["BWY", "736 Naval Air Sqdn"],
   ["RCH", "U.S. Air Mobility Command"]
 ]);
 // Symbol overrides for certain airline codes, principally military
@@ -72,6 +74,7 @@ var AIRLINE_CODE_SYMBOLS = new Map([
   ["COMET", "SFAPMFC-----"],
   ["NOH", "SFAPM-------"],
   ["AAC", "SFAPM-------"],
+  ["BWY", "SFAPMF------"],
   ["RCH", "SFAPMFC-----"]
 ]);
 
@@ -83,7 +86,7 @@ var CIVILIAN_AIRCRAFT_SYMBOL = "SUAPCF----";
 var BASE_STATION_SYMBOL = "SFGPUUS-----";
 var AIRPORT_SYMBOL = "SFGPIBA---H";
 var CATEGORY_DESCRIPTIONS = new Map([
-  ["A0", "Aircraft"],
+  ["A0", ""],
   ["A1", "Light"],
   ["A2", "Small"],
   ["A3", "Large"],
@@ -91,15 +94,15 @@ var CATEGORY_DESCRIPTIONS = new Map([
   ["A5", "Heavy"],
   ["A6", "High Perf"],
   ["A7", "Rotary Wing"],
-  ["B0", "Misc Air"],
+  ["B0", ""],
   ["B1", "Glider"],
   ["B2", "Lighter-than-Air"],
   ["B3", "Para"],
   ["B4", "Ultralight"],
-  ["B5", "Reserved"],
+  ["B5", ""],
   ["B6", "UAV"],
-  ["B7", "Space vehicle"],
-  ["C0", "Ground Track"],
+  ["B7", "Space"],
+  ["C0", ""],
   ["C1", "Emergency Veh."],
   ["C2", "Service Veh."],
   ["C3", "Obstruction"]
@@ -163,12 +166,16 @@ class Entity {
   altRate = null;
   // Speed (knots)
   speed = null;
-  // Name (e.g. flight ID)
-  name = null;
+  // Flight ID
+  flight = null;
+  // Registration / tail number
+  registration = null
   // Squawk (4 digit octal)
   squawk = null;
   // Mode S category (A0, A1...)
   category = null;
+  // Type derived from hex code
+  icaotype = null;
   // Received signal strength (dB)
   rssi = null;
   // Last time any data was updated
@@ -180,6 +187,28 @@ class Entity {
   constructor(hex, fixed) {
     this.hex = hex;
     this.fixed = fixed;
+    if (!fixed) {
+      this.getMetadata();
+    }
+  }
+
+  // Get metadata based on the ICAO hex code, using functions from
+  // dump1090
+  getMetadata() {
+    getAircraftData(this.hex, dump1090url).done(function(data) {
+      if ("r" in data) {
+        this.registration = data.r.trim();
+      }
+      if ("t" in data) {
+        this.icaotype = data.t.trim();
+      }
+      if ("desc" in data) {
+        this.typeDescription = data.desc.trim();
+      }
+      if ("wtc" in data) {
+        this.wtc = data.wtc.trim();
+      }
+    }.bind(this));
   }
 
   // Internalise own data from the provided Dump1090 aircraft object
@@ -248,13 +277,13 @@ class Entity {
       this.speed = bestSpeed;
     }
     if (a.flight != null) {
-      this.name = a.flight;
+      this.flight = a.flight.trim();
     }
     if (a.squawk != null) {
       this.squawk = a.squawk;
     }
     if (a.category != null) {
-      this.category = a.category;
+      this.category = a.category.trim();
     }
     if (posSeen != null) {
       this.posUpdateTime = posSeen;
@@ -310,6 +339,57 @@ class Entity {
     return !this.fixed && getTimeInServerRefFrame().diff(this.updateTime) > dropTrackTimeMS;
   }
 
+  // Generate the name for display on the map. Prefer flight ID, then registration,
+  // finally just the hex code
+  mapDisplayName() {
+    if (this.flight != null && this.flight != "") {
+      return this.flight;
+    } else if (this.registration != null && this.registration != "") {
+      return this.registration;
+    } else {
+      return "HEX " + this.hex;
+    }
+  }
+
+  // Generate the name for display on the table. Prefer flight ID, then registration,
+  // finally blank
+  tableDisplayName() {
+    if (this.flight != null && this.flight != "") {
+      return "<a href='https://flightaware.com/live/flight/" + this.flight + "' target='_blank'>" + this.flight + "</a>";
+    } else if (this.registration != null && this.registration != "") {
+      return this.registration;
+    } else {
+      return "---";
+    }
+  }
+
+  // Generate a "type" for display in the map. Prefer a hex-derived type
+  // plus Mode S category description, otherwise just use category.
+  mapDisplayType() {
+    var type = ""
+    if (this.icaotype != null && this.icaotype != "") {
+      type = this.icaotype;
+    } else if (this.category != null && this.category != "") {
+      type = this.category;
+    }
+    if (this.category != null && this.category != "" && CATEGORY_DESCRIPTIONS.has(this.category) && CATEGORY_DESCRIPTIONS.get(this.category) != "") {
+      type = type + " (" + CATEGORY_DESCRIPTIONS.get(this.category) + ")";
+    }
+    return type;
+  }
+
+  // Generate a "type" for display in the table. Prefer a hex-derived type,
+  // otherwise use Mode S category.
+  tableDisplayType() {
+    if (this.icaotype != null && this.icaotype != "") {
+      return "<a href='https://uk.flightaware.com/photos/aircrafttype/" + this.icaotype + "' target='_blank'>" + this.icaotype + "</a>";
+    } else if (this.category != null && this.category != "") {
+      return "(" + this.category + ")";
+    } else {
+      return "---";
+    }
+  }
+
   // Generate symbol code
   symbolCode() {
     if (this.hex != null && this.hex.startsWith("BASE")) {
@@ -341,11 +421,7 @@ class Entity {
     } else if (this.hex != null && this.hex.startsWith("AIRPORT")) {
       return "";
     } else {
-      var catDescrip = "";
-      if (this.category != null && CATEGORY_DESCRIPTIONS.has(this.category)) {
-        catDescrip = this.category + " " + CATEGORY_DESCRIPTIONS.get(this.category);
-      }
-      return catDescrip;
+      return this.mapDisplayType();
     }
   }
 
@@ -369,8 +445,8 @@ class Entity {
 
   // Get the airline code from the flight name
   airlineCode() {
-    if (this.name != null && this.name != "") {
-      var matches = /^[a-zA-Z]*/.exec(this.name.trim());
+    if (this.flight != null && this.flight != "") {
+      var matches = /^[a-zA-Z]*/.exec(this.flight.trim());
       return matches[0].toUpperCase();
     }
     return null;
@@ -395,7 +471,7 @@ class Entity {
       direction: (this.heading != null) ? this.heading : "",
       altitudeDepth: (this.altitude != null && detailedMap) ? (this.altitude.toFixed(0) + "FT") : "",
       speed: (this.speed != null && detailedMap) ? (this.speed.toFixed(0) + "KTS") : "",
-      type: (this.name != null && this.name != "") ? this.name.toUpperCase() : "HEX " + this.hex.toUpperCase(),
+      type: this.mapDisplayName().toUpperCase(),
       dtg: ((!this.fixed && this.posUpdateTime != null && detailedMap) ? this.posUpdateTime.utc().format("DDHHmmss[Z]MMMYY").toUpperCase() : ""),
       location: detailedMap ? (Math.abs(lat).toFixed(4).padStart(7, '0') + ((lat >= 0) ? 'N' : 'S') + Math.abs(lon).toFixed(4).padStart(8, '0') + ((lon >= 0) ? 'E' : 'W')) : ""
     });
@@ -660,7 +736,7 @@ async function updateTable() {
   // Create header
   var table = $('<table>');
   table.addClass('tracktable');
-  var headerFields = "<th>HEX</th><th>FLIGHT</th><th>SQU</th><th>CAT</th><th>LAT</th><th>LON</th><th>ALT<br>FT</th><th>HDG<br>DEG</th><th>SPD<br>KTS</th><th>SIG<br>dB</th><th>POS<br/>AGE</th><th>DATA<br/>AGE</th>";
+  var headerFields = "<th>HEX</th><th>FLIGHT</th><th>SQU</th><th>TYPE</th><th>LAT</th><th>LON</th><th>ALT<br>FT</th><th>HDG<br>DEG</th><th>SPD<br>KTS</th><th>SIG<br>dB</th><th>POS<br/>AGE</th><th>DATA<br/>AGE</th>";
   var header = $('<tr class="data">').html(headerFields);
   table.append(header);
 
@@ -679,9 +755,9 @@ async function updateTable() {
 
       // Generate table row
       var rowFields = "<td><a href='https://flightaware.com/live/modes/" + e.hex + "/redirect' target='_blank'>" + e.hex.toUpperCase() + "</a></td>";
-      rowFields += "<td>" + ((e.name != null && e.name != "") ? ("<a href='https://flightaware.com/live/flight/" + e.name + "' target='_blank'>" + e.name + "</a>") : "---") + "</td>";
+      rowFields += "<td>" + e.tableDisplayName() + "</td>";
       rowFields += "<td class='" + getSquawkColor(e.squawk) + "'>" + ((e.squawk != null) ? e.squawk : "---") + "</td>";
-      rowFields += "<td>" + ((e.category != null) ? e.category : "---") + "</td>";
+      rowFields += "<td>" + e.tableDisplayType() + "</td>";
       rowFields += "<td>" + ((e.position() != null) ? (Math.abs(e.position()[0]).toFixed(4).padStart(7, '0') + ((e.position()[0] >= 0) ? 'N' : 'S')) : "---") + "</td>";
       rowFields += "<td>" + ((e.position() != null) ? (Math.abs(e.position()[1]).toFixed(4).padStart(8, '0') + ((e.position()[1] >= 0) ? 'E' : 'W')) : "---") + "</td>";
       rowFields += "<td>" + ((e.altitude != null && !isNaN(e.altitude)) ? (e.altitude.toFixed(0) + altRateSymb) : "---") + "</td>";
@@ -796,6 +872,20 @@ function getTimeInServerRefFrame() {
   return moment().subtract(clockOffset, "seconds");
 }
 
+
+/////////////////////////////
+//          INIT           //
+/////////////////////////////
+
+// Pick which URL to use based on the query string parameters
+const queryString = window.location.search;
+const urlParams = new URLSearchParams(queryString);
+var dump1090url = DUMP1090_URL;
+if (urlParams.get("alt") == "true") {
+  dump1090url = DUMP1090_URL_ALT;
+}
+
+
 /////////////////////////////
 //       MAP SETUP         //
 /////////////////////////////
@@ -873,7 +963,7 @@ $("#dropTrackTime").change(function() {
 
 var base = new Entity("BASE", true);
 base.addPosition(BASE_STATION_POS[0], BASE_STATION_POS[1]);
-base.name = "Base Station";
+base.flight = "Base Station";
 entities.set("BASE", base);
 
 var i = 0;
@@ -881,7 +971,7 @@ for (ap of AIRPORTS) {
   i++;
   var e = new Entity("AIRPORT" + i, true);
   e.addPosition([ap.lat, ap.lon]);
-  e.name = ap.name;
+  e.flight = ap.name;
   entities.set("AIRPORT" + i, e);
 }
 updateMap();
@@ -897,16 +987,8 @@ $("div#mobileswitcher").click(function() {
 
 
 /////////////////////////////
-//          INIT           //
+//        KICK-OFF         //
 /////////////////////////////
-
-// Pick which URL to use based on the query string parameters
-const queryString = window.location.search;
-const urlParams = new URLSearchParams(queryString);
-var dump1090url = DUMP1090_URL;
-if (urlParams.get("alt") == "true") {
-  dump1090url = DUMP1090_URL_ALT;
-}
 
 // The loading procedure is quite complex. Dump 1090 provides both history
 // data and live data. We want to load the history data first, so we have
