@@ -45,10 +45,12 @@ var AIRLINE_CODES = new Map([
   ["WGN", "Western Global"],
   ["SWN", "West Air Sweden"],
   ["QTR", "Qatar Airways"],
+  ["IBE", "Iberia"],
   ["VLG", "Vueling Airlines"],
   ["EIN", "Aer Lingus"],
   ["WUK", "Wizz Air"],
   ["FDX", "FedEx"],
+  ["UPS", "UPS"],
   ["ETP", "Empire Test Pilots"],
   ["CLF", "Bristol Flying Centre"],
   ["MLT", "Maleth Aero"],
@@ -77,8 +79,6 @@ var AIRLINE_CODE_SYMBOLS = new Map([
 // to change how the software works!
 var MACH_TO_KNOTS = 666.739;
 var KNOTS_TO_MPS = 0.514444;
-var DEAD_RECKON_TIME_MS = 60000;
-var DROP_TRACK_TIME_MS = 300000;
 var CIVILIAN_AIRCRAFT_SYMBOL = "SUAPCF----";
 var BASE_STATION_SYMBOL = "SFGPUUS-----";
 var AIRPORT_SYMBOL = "SFGPIBA---H";
@@ -136,6 +136,8 @@ var firstFetch = true;
 var followSelected = false;
 var snailTrailLength = 500;
 var snailTrailsMode = 2; // 0 = none, 1 = only selected, 2 = all
+var deadReckonTimeMS = 60000;
+var dropTrackTimeMS = 300000;
 var detailedMap = true;
 
 
@@ -261,9 +263,7 @@ class Entity {
   // Update its position, adding to the history
   addPosition(lat, lon) {
     // Trim the snail trail if required
-    while (this.positionHistory.length >= snailTrailLength) {
-      this.positionHistory.shift();
-    }
+    this.trimSnailTrail();
 
     // Add the new entry
     this.positionHistory.push([lat, lon]);
@@ -301,12 +301,12 @@ class Entity {
   // Is the track old enough that we should display the dead reckoned
   // position instead of the real one?
   oldEnoughToDR() {
-    return !this.fixed && this.posUpdateTime != null && getTimeInServerRefFrame().diff(this.posUpdateTime) > DEAD_RECKON_TIME_MS;
+    return !this.fixed && this.posUpdateTime != null && getTimeInServerRefFrame().diff(this.posUpdateTime) > deadReckonTimeMS;
   }
 
   // Is the track old enough that we should drop it?
   oldEnoughToDelete() {
-    return !this.fixed && getTimeInServerRefFrame().diff(this.updateTime) > DROP_TRACK_TIME_MS;
+    return !this.fixed && getTimeInServerRefFrame().diff(this.updateTime) > dropTrackTimeMS;
   }
 
   // Generate symbol code
@@ -459,6 +459,13 @@ class Entity {
       });
     } else {
       return null;
+    }
+  }
+
+  // Trim the snail trail if required
+  trimSnailTrail() {
+    while (this.positionHistory.length >= snailTrailLength) {
+      this.positionHistory.shift();
     }
   }
 }
@@ -750,9 +757,9 @@ function defaultZoom() {
 function getAgeColor(time) {
   if (time != null) {
     var age = getTimeInServerRefFrame().diff(time);
-    if (age <= DEAD_RECKON_TIME_MS) {
+    if (age <= deadReckonTimeMS) {
       return "green";
-    } else if (age <= DROP_TRACK_TIME_MS) {
+    } else if (age <= dropTrackTimeMS) {
       return "orange";
     }
   }
@@ -837,7 +844,19 @@ $("#snailTrails").change(function() {
 });
 $("#snailTrailLength").change(function() {
   snailTrailLength = parseInt($(this).val());
+  entities.forEach(function(e) { e.trimSnailTrail(); });
   updateMap();
+});
+$("#deadReckonTime").change(function() {
+  deadReckonTimeMS = parseInt($(this).val()) * 1000;
+  updateMap();
+  updateTable();
+});
+$("#dropTrackTime").change(function() {
+  dropTrackTimeMS = parseInt($(this).val()) * 1000;
+  dropTimedOutAircraft();
+  updateMap();
+  updateTable();
 });
 
 

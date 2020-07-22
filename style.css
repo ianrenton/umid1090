@@ -41,14 +41,17 @@ div.centre {
 }
 div#buttons {
     margin-top: 1.5em;
+    line-height: 2em;
     text-align: center;
 }
 div#checkboxes {
     margin-top: 0.5em;
+    line-height: 2em;
     text-align: center;
 }
 div#dropdowns {
     margin-top: 0.7em;
+    line-height: 2em;
     text-align: center;
 }
 div#mobileswitcher {
