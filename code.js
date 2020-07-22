@@ -21,6 +21,23 @@ var BASE_STATION_SOFTWARE = ["PiAware 3.8.1", "dump1090-fa"];
 var START_LAT_LON = [50.75128, -1.90168];
 var START_ZOOM = 9;
 
+// From https://en.wikipedia.org/wiki/List_of_airline_codes. I've just added common
+// ones for my area because there are a lot of duplicates across different countries
+var AIRLINE_CODES = new Map([
+  ["RYR", "Ryanair"],
+  ["BAW", "British Airways"],
+  ["EZY", "EasyJet"],
+  ["EXS", "Jet2"],
+  ["KLM", "KLM"],
+  ["TAM", "LATAM Brasil"],
+  ["WGN", "Western Global"],
+  ["SWN", "West Air Sweden"],
+  ["QTR", "Qatar Airways"],
+  ["UKP", "Police"],
+  ["RRR", "Royal Air Force"],
+  ["ASCOT", "Royal Air Force"]
+]);
+
 // Airports - you can add some with their own symbols if you like by following this
 // example, although I find it gets cluttered when using the OpenAIP layer as well
 var AIRPORTS = [
@@ -85,19 +102,6 @@ var AIRLINE_CODE_SYMBOLS = new Map([
   ["UKP", "SUAPMHR---"],
   ["RRR", "SFAPMFC-----"],
   ["ASCOT", "SFAPMFC-----"]
-]);
-// From https://en.wikipedia.org/wiki/List_of_airline_codes. I've just added common
-// ones for my area because there are a lot of duplicates across different countries
-var AIRLINE_CODES = new Map([
-  ["RYR", "Ryanair"],
-  ["BAW", "British Airways"],
-  ["EZY", "EasyJet"],
-  ["EXS", "Jet2"],
-  ["KLM", "KLM"],
-  ["TAM", "LATAM Brasil"],
-  ["UKP", "Police"],
-  ["RRR", "Royal Air Force"],
-  ["ASCOT", "Royal Air Force"]
 ]);
 var EMERGENCY_SQUAWKS = ["7500", "7600", "7700"];
 var entities = new Map(); // hex -> Entity
@@ -321,9 +325,7 @@ function processHistory() {
   for (item of historyStore) {
     handleData(item, false);
   }
-
-  // Finally, call updateAll which will drop old tracks and update displays.
-  updateAll();
+  dropTimedOutAircraft();
 }
 
 // JSON live data retrieval method. This is the main data request
