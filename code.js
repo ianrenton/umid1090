@@ -21,6 +21,13 @@ var BASE_STATION_SOFTWARE = ["PiAware 3.8.1", "dump1090-fa"];
 var START_LAT_LON = [50.75128, -1.90168];
 var START_ZOOM = 9;
 
+// Airports - you can add some with their own symbols if you like by following this
+// example, although I find it gets cluttered when using the OpenAIP layer as well
+var AIRPORTS = [
+  //    {name: "Bournemouth Airport", lat: 50.78055, lon: -1.83938},
+  //    {name: "Southampton Airport", lat: 50.95177, lon: -1.35625}
+];
+
 // From https://en.wikipedia.org/wiki/List_of_airline_codes. I've just added common
 // ones for my area because there are a lot of duplicates across different countries
 var AIRLINE_CODES = new Map([
@@ -29,21 +36,24 @@ var AIRLINE_CODES = new Map([
   ["EZY", "EasyJet"],
   ["EXS", "Jet2"],
   ["KLM", "KLM"],
+  ["VIR", "Virgin Atlantic"],
+  ["AAL", "American Airlines"],
   ["TAM", "LATAM Brasil"],
   ["WGN", "Western Global"],
   ["SWN", "West Air Sweden"],
   ["QTR", "Qatar Airways"],
   ["UKP", "Police"],
   ["RRR", "Royal Air Force"],
-  ["ASCOT", "Royal Air Force"]
+  ["ASCOT", "Royal Air Force"],
+  ["RCH", "U.S. Air Mobility Command"]
 ]);
-
-// Airports - you can add some with their own symbols if you like by following this
-// example, although I find it gets cluttered when using the OpenAIP layer as well
-var AIRPORTS = [
-  //    {name: "Bournemouth Airport", lat: 50.78055, lon: -1.83938},
-  //    {name: "Southampton Airport", lat: 50.95177, lon: -1.35625}
-];
+// Symbol overrides for certain airline codes, principally military
+var AIRLINE_CODE_SYMBOLS = new Map([
+  ["UKP", "SUAPMHR---"],
+  ["RRR", "SFAPMFC-----"],
+  ["ASCOT", "SFAPMFC-----"],
+  ["RCH", "SFAPMFC-----"]
+]);
 
 // More globals - you should not have to edit beyond this point unless you want
 // to change how the software works!
@@ -98,11 +108,6 @@ var CATEGORY_SYMBOLS = new Map([
   ["C2", "SUGP------"],
   ["C3", "SUGP------"]
 ]);
-var AIRLINE_CODE_SYMBOLS = new Map([
-  ["UKP", "SUAPMHR---"],
-  ["RRR", "SFAPMFC-----"],
-  ["ASCOT", "SFAPMFC-----"]
-]);
 var EMERGENCY_SQUAWKS = ["7500", "7600", "7700"];
 var entities = new Map(); // hex -> Entity
 var historyStore = [];
@@ -120,27 +125,116 @@ var detailedMap = true;
 // Entity class.
 // Altitude is stored in feet, heading/lat/lon in degrees, speed in knots.
 class Entity {
+  // ICAO Hex code
+  hex = null;
+  // Fixed (base station) or mobile (aircraft)
+  fixed = null;
+  // Position history
+  positionHistory = [];
+  // Heading (deg)
+  heading = null;
+  // Altitude (ft)
+  altitude = null;
+  // Altitude rate (ft/s)
+  altRate = null;
+  // Speed (knots)
+  speed = null;
+  // Name (e.g. flight ID)
+  name = null;
+  // Squawk (4 digit octal)
+  squawk = null;
+  // Mode S category (A0, A1...)
+  category = null;
+  // Received signal strength (dB)
+  rssi = null;
+  // Last time any data was updated
+  updateTime = null;
+  // Last time position was updated
+  posUpdateTime = null;
+
   // Create new entity
-  constructor(hex, fixed, lat, lon, heading, altitude, altRate, speed, name, squawk, category, symbol, desc1, desc2, rssi, updateTime, posUpdateTime) {
+  constructor(hex, fixed) {
     this.hex = hex;
     this.fixed = fixed;
-    this.positionHistory = [];
-    if (lat != null) {
-      this.positionHistory.push([lat, lon]);
+  }
+
+  // Internalise own data from the provided Dump1090 aircraft object
+  internalise(a, dataTime) {
+    // Get "best" versions of some parameters that have multiple variants
+    // conveying similar information
+    var bestHeading = a.track;
+    if (a.mag_heading != null) {
+      bestHeading = a.mag_heading;
     }
-    this.heading = heading;
-    this.altitude = altitude;
-    this.altRate = altRate;
-    this.speed = speed;
-    this.name = (name != null) ? name.trim().replace(/^\s+|\s+$/g, '') : "";
-    this.squawk = squawk;
-    this.category = category;
-    this.symbol = symbol;
-    this.desc1 = (desc1 != null) ? desc1.trim().replace(/^\s+|\s+$/g, '') : "";
-    this.desc2 = (desc2 != null) ? desc2.trim().replace(/^\s+|\s+$/g, '') : "";
-    this.rssi = rssi;
-    this.updateTime = updateTime;
-    this.posUpdateTime = posUpdateTime;
+    if (a.true_heading != null) {
+      bestHeading = a.true_heading;
+    }
+    var bestAlt = a.alt_geom;
+    if (a.alt_baro != null) {
+      bestAlt = a.alt_baro;
+    }
+    var bestAltRate = a.geom_rate;
+    if (a.baro_rate != null) {
+      bestAltRate = a.baro_rate;
+    }
+    var bestSpeed = null;
+    if (a.mach != null) {
+      bestSpeed = a.mach * MACH_TO_KNOTS;
+    }
+    if (a.ias != null) {
+      bestSpeed = a.ias;
+    }
+    if (a.tas != null) {
+      bestSpeed = a.tas;
+    }
+    if (a.gs != null) {
+      bestSpeed = a.gs;
+    }
+
+    // Update time adjustment
+    var seen = moment.unix(dataTime).utc();
+    if (a.seen != null) {
+      seen = seen.subtract(a.seen, 'seconds');
+    }
+    var posSeen = null;
+    if (a.lat != null) {
+      posSeen = moment.unix(dataTime).utc();
+      if (a.seen_pos != null) {
+        posSeen = posSeen.subtract(a.seen_pos, 'seconds');
+      }
+    }
+
+    // Set internal variables
+    this.rssi = a.rssi;
+    this.updateTime = seen;
+
+    if (a.lat != null) {
+      this.addPosition(a.lat, a.lon);
+    }
+    if (bestHeading != null) {
+      this.heading = bestHeading;
+    }
+    if (bestAlt != null) {
+      this.altitude = bestAlt;
+    }
+    if (bestAltRate != null) {
+      this.altRate = bestAltRate;
+    }
+    if (a.mach != null) {
+      this.speed = bestSpeed;
+    }
+    if (a.flight != null) {
+      this.name = a.flight;
+    }
+    if (a.squawk != null) {
+      this.squawk = a.squawk;
+    }
+    if (a.category != null) {
+      this.category = a.category;
+    }
+    if (posSeen != null) {
+      this.posUpdateTime = posSeen;
+    }
   }
 
   // Update its position, adding to the history
@@ -188,6 +282,72 @@ class Entity {
     return !this.fixed && getTimeInServerRefFrame().diff(this.updateTime) > DROP_TRACK_TIME_MS;
   }
 
+  // Generate symbol code
+  symbolCode() {
+    if (this.hex != null && this.hex.startsWith("BASE")) {
+      return BASE_STATION_SYMBOL;
+    } else if (this.hex != null && this.hex.startsWith("AIRPORT")) {
+      return AIRPORT_SYMBOL;
+    } else {
+      // Generate symbol based on airline code and/or category
+      var airlineCode = this.airlineCode();
+      var symbol = CIVILIAN_AIRCRAFT_SYMBOL;
+      if (airlineCode != null && AIRLINE_CODE_SYMBOLS.has(airlineCode)) {
+        symbol = CATEGORY_SYMBOLS.get(airlineCode);
+      } else if (this.category != null && CATEGORY_SYMBOLS.has(this.category)) {
+        symbol = CATEGORY_SYMBOLS.get(a.category);
+      }
+
+      // Change symbol to "anticipated" if dead reckoning
+      if (this.oldEnoughToDR()) {
+        symbol = symbol.substr(0, 3) + "A" + symbol.substr(4);
+      }
+      return symbol;
+    }
+  }
+
+  // Generate first "description" line
+  firstDescrip() {
+    if (this.hex != null && this.hex.startsWith("BASE")) {
+      return BASE_STATION_SOFTWARE[0];
+    } else if (this.hex != null && this.hex.startsWith("AIRPORT")) {
+      return "";
+    } else {
+      var catDescrip = "";
+      if (this.category != null && CATEGORY_DESCRIPTIONS.has(this.category)) {
+        catDescrip = this.category + " " + CATEGORY_DESCRIPTIONS.get(this.category);
+      }
+      return catDescrip;
+    }
+  }
+
+  // Generate second "description" line. Generally the airline name
+  secondDescrip() {
+    if (this.hex != null && this.hex.startsWith("BASE")) {
+      return BASE_STATION_SOFTWARE[1];
+    } else if (this.hex != null && this.hex.startsWith("AIRPORT")) {
+      return "";
+    } else {
+      var airline = "";
+      var airlineCode = this.airlineCode();
+      if (airlineCode != null) {
+        if (AIRLINE_CODES.has(airlineCode)) {
+          airline = AIRLINE_CODES.get(airlineCode);
+        }
+      }
+      return airline;
+    }
+  }
+
+  // Get the airline code from the flight name
+  airlineCode() {
+    if (this.name != null && this.name != "") {
+      var matches = /^[a-zA-Z]*/.exec(this.name.trim());
+      return matches[0].toUpperCase();
+    }
+    return null;
+  }
+
   // Generate a Milsymbol icon for the entity
   icon() {
     // No point returning an icon if we don't know where to draw it
@@ -199,17 +359,11 @@ class Entity {
     var lat = this.iconPosition()[0];
     var lon = this.iconPosition()[1];
 
-    // Change symbol to "anticipated" if dead reckoning
-    var symbol = this.symbol;
-    if (this.oldEnoughToDR()) {
-      symbol = symbol.substr(0, 3) + "A" + symbol.substr(4);
-    }
-
     // Generate full symbol for display
-    var mysymbol = new ms.Symbol(symbol, {
+    var mysymbol = new ms.Symbol(this.symbolCode(), {
       size: 35,
-      staffComments: detailedMap ? this.desc1.toUpperCase() : "",
-      additionalInformation: detailedMap ? this.desc2.toUpperCase() : "",
+      staffComments: detailedMap ? this.firstDescrip().toUpperCase() : "",
+      additionalInformation: detailedMap ? this.secondDescrip().toUpperCase() : "",
       direction: (this.heading != null) ? this.heading : "",
       altitudeDepth: (this.altitude != null && detailedMap) ? (this.altitude.toFixed(0) + "FT") : "",
       speed: (this.speed != null && detailedMap) ? (this.speed.toFixed(0) + "KTS") : "",
@@ -292,7 +446,7 @@ class Entity {
 // is then later used in processHistory().
 function requestHistory() {
   var url = dump1090url + "/data/receiver.json";
-  $.getJSON( url, function( data ) {
+  $.getJSON(url, function(data) {
     // Got receiver metadata. Set tracker status
     $("span#trackerstatus").html("ONLINE, LOADING HISTORY...");
     setTrackerStatus("waiting");
@@ -301,7 +455,7 @@ function requestHistory() {
     var i;
     for (i = 0; i < historyFileCount; i++) {
       var url = dump1090url + "/data/history_" + i + ".json";
-      $.getJSON( url, async function( data ) {
+      $.getJSON(url, async function(data) {
         // Got history data, store it. We don't want to process it immediately
         // because history data is not ordered; we need to store it first then
         // order it as soon as we think all the data will have arrived.
@@ -320,7 +474,7 @@ function processHistory() {
 
   // History data could have come in any order, so first sort it.
   historyStore.sort((a, b) => (a.now > b.now) ? 1 : -1);
-  
+
   // Now use it
   for (item of historyStore) {
     handleData(item, false);
@@ -378,124 +532,18 @@ function handleData(result, live) {
 
   // Add/update aircraft in entity list
   for (a of result.aircraft) {
-    // Get "best" versions of some parameters that have multiple variants
-    // conveying similar information
-    var bestHeading = a.track;
-    if (a.mag_heading != null) {
-      bestHeading = a.mag_heading;
-    }
-    if (a.true_heading != null) {
-      bestHeading = a.true_heading;
-    }
-    var bestAlt = a.alt_geom;
-    if (a.alt_baro != null) {
-      bestAlt = a.alt_baro;
-    }
-    var bestAltRate = a.geom_rate;
-    if (a.baro_rate != null) {
-      bestAltRate = a.baro_rate;
-    }
-    var bestSpeed = null;
-    if (a.mach != null) {
-      bestSpeed = a.mach * MACH_TO_KNOTS;
-    }
-    if (a.ias != null) {
-      bestSpeed = a.ias;
-    }
-    if (a.tas != null) {
-      bestSpeed = a.tas;
-    }
-    if (a.gs != null) {
-      bestSpeed = a.gs;
-    }
-
-    // Update time adjustment
-    var seen = moment.unix(result.now).utc();
-    if (a.seen != null) {
-      seen = seen.subtract(a.seen, 'seconds');
-    }
-    var posSeen = null;
-    if (a.lat != null) {
-      posSeen = moment.unix(result.now).utc();
-      if (a.seen_pos != null) {
-        posSeen = posSeen.subtract(a.seen_pos, 'seconds');
-      }
-    }
-
-    // Airline code
-    var airlineCode = null;
-    var airline = "";
-    if (a.flight != null && a.flight != "") {
-      var matches = /^[a-zA-Z]*/.exec(a.flight.trim());
-      airlineCode = matches[0].toUpperCase();
-      if (AIRLINE_CODES.has(airlineCode)) {
-        airline = AIRLINE_CODES.get(airlineCode);
-      }
-    }
-
-    // Implied symbol
-    var symbol = CIVILIAN_AIRCRAFT_SYMBOL;
-    if (airlineCode != null && AIRLINE_CODE_SYMBOLS.has(airlineCode)) {
-      symbol = CATEGORY_SYMBOLS.get(airlineCode);
-    } else if (a.category != null && CATEGORY_SYMBOLS.has(a.category)) {
-      symbol = CATEGORY_SYMBOLS.get(a.category);
-    }
-    // Implied category description
-    var catDescrip = "";
-    if (a.category != null && CATEGORY_DESCRIPTIONS.has(a.category)) {
-      catDescrip = a.category + " " + CATEGORY_DESCRIPTIONS.get(a.category);
-    }
-
-
-    // Now create or update the entity.
     if (!entities.has(a.hex)) {
       // Doesn't exist, so create
-      entities.set(a.hex, new Entity(a.hex, false, a.lat, a.lon, bestHeading, bestAlt, bestAltRate, bestSpeed, a.flight, a.squawk, a.category, symbol, catDescrip, airline, a.rssi, seen, posSeen));
-    } else {
-      // Exists, so update
-      var e = entities.get(a.hex);
-      if (a.lat != null) {
-        e.addPosition(a.lat, a.lon);
-      }
-      if (bestHeading != null) {
-        e.heading = bestHeading;
-      }
-      if (bestAlt != null) {
-        e.altitude = bestAlt;
-      }
-      if (bestAltRate != null) {
-        e.altRate = bestAltRate;
-      }
-      if (a.mach != null) {
-        e.speed = bestSpeed;
-      }
-      if (a.flight != null) {
-        e.name = a.flight;
-      }
-      if (a.squawk != null) {
-        e.squawk = a.squawk;
-      }
-      if (a.category != null) {
-        e.category = a.category;
-        e.desc1 = catDescrip;
-        e.symbol = symbol;
-      }
-      if (airline != null) {
-        e.desc2 = airline;
-      }
-      e.rssi = a.rssi;
-      e.updateTime = seen;
-      if (posSeen != null) {
-        e.posUpdateTime = posSeen;
-      }
+      entities.set(a.hex, new Entity(a.hex, false));
     }
+    entities.get(a.hex).internalise(a, result.now);
   }
 }
 
 // Handle a failure to receive data
 async function handleFailure() {
   $("span#trackerstatus").html("TRACKER OFFLINE");
-    setTrackerStatus("error");
+  setTrackerStatus("error");
 }
 
 // Adjust entities if they need to have their symbol changed or be dropped,
@@ -644,8 +692,7 @@ async function panTo(hex) {
 function defaultZoom() {
   // If on mobile and the map is hidden, setView won't work properly,
   // so switch to the map first
-  if ($('#map').is(':hidden'))
-  {
+  if ($('#map').is(':hidden')) {
     $("div#tote").toggle();
     $("div#map").toggle();
   }
@@ -731,15 +778,15 @@ $(document).on("click", "tr", function(e) {
 
 
 $("#followSelected").click(function() {
-    followSelected = $(this).is(':checked');
+  followSelected = $(this).is(':checked');
 });
 $("#snailTrails").click(function() {
-    snailTrails = $(this).is(':checked');
-    updateMap();
+  snailTrails = $(this).is(':checked');
+  updateMap();
 });
 $("#detailedmap").click(function() {
-    detailedMap = $(this).is(':checked');
-    updateMap();
+  detailedMap = $(this).is(':checked');
+  updateMap();
 });
 
 
@@ -747,11 +794,18 @@ $("#detailedmap").click(function() {
 //     ENTITY SETUP        //
 /////////////////////////////
 
+var base = new Entity("BASE", true);
+base.addPosition(BASE_STATION_POS[0], BASE_STATION_POS[1]);
+base.name = "Base Station";
+entities.set("BASE", base);
+
 var i = 0;
-entities.set(i, new Entity(i, true, BASE_STATION_POS[0], BASE_STATION_POS[1], null, null, null, null, "Base Station", null, null, BASE_STATION_SYMBOL, BASE_STATION_SOFTWARE[0], BASE_STATION_SOFTWARE[1], null, moment()));
 for (ap of AIRPORTS) {
   i++;
-  entities.set(i, new Entity(i, true, ap.lat, ap.lon, null, null, null, null, ap.name, null, null, AIRPORT_SYMBOL, "", "", null, moment()));
+  var e = new Entity("AIRPORT" + i, true);
+  e.addPosition([ap.lat, ap.lon]);
+  e.name = ap.name;
+  entities.set("AIRPORT" + i, e);
 }
 updateMap();
 
