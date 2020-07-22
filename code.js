@@ -369,11 +369,15 @@ class Entity {
     var type = ""
     if (this.icaotype != null && this.icaotype != "") {
       type = this.icaotype;
+      if (this.category != null && this.category != "" && CATEGORY_DESCRIPTIONS.has(this.category) && CATEGORY_DESCRIPTIONS.get(this.category) != "") {
+        type = type + " (" + CATEGORY_DESCRIPTIONS.get(this.category) + ")";
+      }
     } else if (this.category != null && this.category != "") {
-      type = this.category;
-    }
-    if (this.category != null && this.category != "" && CATEGORY_DESCRIPTIONS.has(this.category) && CATEGORY_DESCRIPTIONS.get(this.category) != "") {
-      type = type + " (" + CATEGORY_DESCRIPTIONS.get(this.category) + ")";
+      type = "(" + this.category;
+      if (CATEGORY_DESCRIPTIONS.has(this.category) && CATEGORY_DESCRIPTIONS.get(this.category) != "") {
+        type = type + " " + CATEGORY_DESCRIPTIONS.get(this.category);
+      }
+      type = type + ")";
     }
     return type;
   }
