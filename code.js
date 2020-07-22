@@ -48,7 +48,9 @@ var AIRLINE_CODES = new Map([
   ["VLG", "Vueling Airlines"],
   ["EIN", "Aer Lingus"],
   ["WUK", "Wizz Air"],
+  ["FDX", "FedEx"],
   ["ETP", "Empire Test Pilots"],
+  ["CLF", "Bristol Flying Centre"],
   ["MLT", "Maleth Aero"],
   ["UKP", "Police"],
   ["CG", "Coastguard"],
@@ -56,6 +58,7 @@ var AIRLINE_CODES = new Map([
   ["ASCOT", "Royal Air Force"],
   ["COMET", "Royal Air Force"],
   ["NOH", "RAF Northolt 32 Sqdn"],
+  ["AAC", "Army Air Corps"],
   ["RCH", "U.S. Air Mobility Command"]
 ]);
 // Symbol overrides for certain airline codes, principally military
@@ -66,6 +69,7 @@ var AIRLINE_CODE_SYMBOLS = new Map([
   ["ASCOT", "SFAPMFC-----"],
   ["COMET", "SFAPMFC-----"],
   ["NOH", "SFAPM-------"],
+  ["AAC", "SFAPM-------"],
   ["RCH", "SFAPMFC-----"]
 ]);
 
@@ -127,8 +131,10 @@ var entities = new Map(); // hex -> Entity
 var historyStore = [];
 var clockOffset = 0; // Local PC time (UTC) minus data time. Used to prevent data appearing as too new or old if the local PC clock is off.
 var selectedEntityHex = "";
+var snailTrailLength = 500;
 var firstFetch = true;
 var followSelected = false;
+var snailTrailLength = 500;
 var snailTrailsMode = 2; // 0 = none, 1 = only selected, 2 = all
 var detailedMap = true;
 
@@ -254,6 +260,12 @@ class Entity {
 
   // Update its position, adding to the history
   addPosition(lat, lon) {
+    // Trim the snail trail if required
+    while (this.positionHistory.length >= snailTrailLength) {
+      this.positionHistory.shift();
+    }
+
+    // Add the new entry
     this.positionHistory.push([lat, lon]);
   }
 
@@ -808,7 +820,7 @@ $(document).on("click", "tr", function(e) {
 
 
 /////////////////////////////
-//     CHECKBOX SETUP      //
+//     CONTROLS SETUP      //
 /////////////////////////////
 
 
@@ -821,6 +833,10 @@ $("#detailedmap").click(function() {
 });
 $("#snailTrails").change(function() {
   snailTrailsMode = parseInt($(this).val());
+  updateMap();
+});
+$("#snailTrailLength").change(function() {
+  snailTrailLength = parseInt($(this).val());
   updateMap();
 });
 
