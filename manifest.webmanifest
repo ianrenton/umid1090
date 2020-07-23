@@ -1,0 +1,28 @@
+{
+    "dir": "ltr",
+    "lang": "English",
+    "name": "U.M.I.D. 1090 Aircraft Tracking Interface",
+    "short_name": "U.M.I.D. 1090",
+    "scope": "/",
+    "display": "standalone",
+    "start_url": "https://flightmap.ianrenton.com/",
+    "background_color": "#95c8ee",
+    "theme_color": "#f5f7fa",
+    "description": "U.M.I.D. 1090 Aircraft Tracking Interface at flightmap.ianrenton.com",
+    "orientation": "portrait-primary",
+    "related_applications": [],
+    "prefer_related_applications": false,
+    "icons": [
+    {
+      "src": "/favicon-192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "/favicon-512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+    "url": "https://flightmap.ianrenton.com"
+}
