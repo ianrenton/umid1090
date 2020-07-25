@@ -7,13 +7,13 @@
 // Select the alternate URL by appending ?alt=true to the URL for UMID1090.
 // Normal users won't do this and will therefore use the main public URL, but you
 // can bookmark the "alt" version to always use your LAN address for testing.
-var DUMP1090_URL = "http://mciserver.zapto.org/dump1090-fa/";
+var DUMP1090_URL = window.location.protocol + "//mciserver.zapto.org/dump1090-fa/";
 var DUMP1090_URL_ALT = "http://192.168.1.241:8081/dump1090-fa/";
 
 // Map server URLs - if re-using this code you will need to provide your own Mapbox
 // access token in the Mapbox URL. You can still use my style.
 var MAPBOX_URL = "https://api.mapbox.com/styles/v1/ianrenton/ckchhz5ks23or1ipf1le41g56/tiles/256/{z}/{x}/{y}?access_token=pk.eyJ1IjoiaWFucmVudG9uIiwiYSI6ImNrY2h4ZzU1ejE1eXoyc25uZjRvMmkyc2IifQ.JN65BkQfwQQIDfpMP_fFIQ";
-var OPENAIP_URL = "http://{s}.tile.maps.openaip.net/geowebcache/service/tms/1.0.0/openaip_basemap@EPSG%3A900913@png/{z}/{x}/{y}.png";
+var OPENAIP_URL = "https://{s}.tile.maps.openaip.net/geowebcache/service/tms/1.0.0/openaip_basemap@EPSG%3A900913@png/{z}/{x}/{y}.png";
 
 // Base station position and map default position/zoom
 var BASE_STATION_POS = [50.75128, -1.90168];
