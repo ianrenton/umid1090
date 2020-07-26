@@ -265,6 +265,7 @@ var AIRCRAFT_TYPE_DESIGNATORS = new Map([
   ["P68", "Partenavia P.68"],
   ["P180", "Piaggio P.180"],
   ["P208", "Tecnam P2008"],
+  ["P210", "Cessna P210"],
   ["PA31", "Piper PA-31"],
   ["PA44", "Piper PA-44"],
   ["PA46", "Piper PA-46"],
