@@ -8,7 +8,7 @@
 // Normal users won't do this and will therefore use the main public URL, but you
 // can bookmark the "alt" version to always use your LAN address for testing.
 var DUMP1090_URL = window.location.protocol + "//mciserver.zapto.org/dump1090-fa/";
-var DUMP1090_URL_ALT = "http://192.168.1.241:8081/dump1090-fa/";
+var DUMP1090_URL_ALT = "http://192.168.1.241/dump1090-fa/";
 
 // Map server URLs - if re-using this code you will need to provide your own Mapbox
 // access token in the Mapbox URL. You can still use my style.
