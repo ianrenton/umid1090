@@ -57,6 +57,7 @@ var AIRLINE_CODES = new Map([
   ["CLF", "Bristol Flying Centre"],
   ["MLT", "Maleth Aero"],
   ["UKP", "Police"],
+  ["HLE", "Air Ambulance"],
   ["CG", "Coastguard"],
   ["RRR", "Royal Air Force"],
   ["ASCOT", "Royal Air Force"],
@@ -69,7 +70,8 @@ var AIRLINE_CODES = new Map([
 ]);
 // Symbol overrides for certain airline codes, principally military
 var AIRLINE_CODE_SYMBOLS = new Map([
-  ["UKP", "SUAPMHR---"],
+  ["UKP", "EUOPDJ------"],
+  ["HLE", "EUOPAF------"],
   ["CG", "SFAPMHH-----"],
   ["RRR", "SFAPMFC-----"],
   ["ASCOT", "SFAPMFC-----"],
