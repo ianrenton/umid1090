@@ -27,6 +27,7 @@ const PRECACHE_URLS = [
   'latlongcalc.js',
   'milsymbol.js',
   'moment.js',
+  'typedesignators.js',
   'favicon.png',
   'favicon.svg',
   'favicon-192.png',
