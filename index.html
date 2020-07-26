@@ -98,5 +98,10 @@
         <div id="map"></div>
         <script src="dbloader.js"></script>
         <script src="code.js"></script>
+        <script>
+            if ('serviceWorker' in navigator) {
+              navigator.serviceWorker.register('service-worker.js');
+            }
+        </script>
     </body>
 </html>
