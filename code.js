@@ -1041,9 +1041,5 @@ setTimeout(processHistory, 9000);
 // its own setTimeout after it finishes, to trigger timed requests. It's
 // done this way so we can change the polling interval interactively.
 setTimeout(requestLiveData, dataRefreshIntervalMS);
-// The display updater is done as an interval, every second, but not
-// *starting* until 10 seconds has elapsed, so it gives the history
-// processing time to finish.
-setTimeout(function() {
-  setInterval(updateAll, 1000)
-}, 10000);
+// The display updater is done as an interval, every second.
+setInterval(updateAll, 1000);
