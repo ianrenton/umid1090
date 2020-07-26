@@ -30,6 +30,8 @@ var AIRPORTS = [
 
 // From https://en.wikipedia.org/wiki/List_of_airline_codes. I've just added common
 // ones for my area because there are a lot of duplicates across different countries
+// If running UMID1090 for yourself you may want to change them for what you see
+// in your area.
 var AIRLINE_CODES = new Map([
   ["RYR", "Ryanair"],
   ["BAW", "British Airways"],
@@ -68,7 +70,8 @@ var AIRLINE_CODES = new Map([
   ["BWY", "736 Naval Air Sqdn"],
   ["RCH", "U.S. Air Mobility Command"]
 ]);
-// Symbol overrides for certain airline codes, principally military
+// Symbol overrides for certain airline codes, principally military. Again you
+// may want to change them for the codes used in your area/country.
 var AIRLINE_CODE_SYMBOLS = new Map([
   ["UKP", "EUOPDJ------"],
   ["HLE", "EUOPAF------"],
@@ -408,14 +411,25 @@ class Entity {
     }
   }
 
-  // Generate a "type" for display in the map. Prefer a hex-derived type
-  // plus Mode S category description, otherwise just use category.
+  // Generate a "type" for display in the map. In descending preference order:
+  // 1) Use the full name e.g. "BOEING 747", if we have it in our hard-coded
+  // table and if we have a proper ICAO type for the plane due to the dump1090
+  // database lookup
+  // 2) If we have an ICAO type and category, but it's not in our hard-coded
+  //    table, show those e.g. "B747 (HEAVY)"
+  // 3) If we have ICAO type but not category, display that e.g. "B747"
+  // 4) If we have a category only, show that e.g. "(A4 HEAVY)"
+  // 5) Otherwise show nothing.
   mapDisplayType() {
     var type = ""
     if (this.icaotype != null && this.icaotype != "") {
-      type = this.icaotype;
-      if (this.category != null && this.category != "" && CATEGORY_DESCRIPTIONS.has(this.category) && CATEGORY_DESCRIPTIONS.get(this.category) != "") {
-        type = type + " (" + CATEGORY_DESCRIPTIONS.get(this.category) + ")";
+      if (AIRCRAFT_TYPE_DESIGNATORS.has(this.icaotype)) {
+        type= AIRCRAFT_TYPE_DESIGNATORS.get(this.icaotype);
+      } else {
+        type = this.icaotype;
+        if (this.category != null && this.category != "" && CATEGORY_DESCRIPTIONS.has(this.category) && CATEGORY_DESCRIPTIONS.get(this.category) != "") {
+          type = type + " (" + CATEGORY_DESCRIPTIONS.get(this.category) + ")";
+        }
       }
     } else if (this.category != null && this.category != "") {
       type = "(" + this.category;
