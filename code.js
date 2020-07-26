@@ -144,8 +144,9 @@ var snailTrailLength = 500;
 var firstFetch = true;
 var followSelected = false;
 var snailTrailLength = 500;
-var snailTrailsMode = 2; // 0 = none, 1 = only selected, 2 = all
-var deadReckonTimeMS = 60000;
+var snailTrailsMode = 1; // 0 = none, 1 = only selected, 2 = all
+var deadReckonTimeMS = 1000; // Fixed on a very short time to always show dead reckoned position, like FlightRadar24
+var showAnticipatedTimeMS = 60000;
 var dropTrackTimeMS = 300000;
 var detailedMap = true;
 
@@ -333,8 +334,13 @@ class Entity {
     return pos;
   }
 
-  // Is the track old enough that we should display the dead reckoned
-  // position instead of the real one?
+  // Is the track old enough that we should display the track as an anticipated
+  // position?
+  oldEnoughToShowAnticipated() {
+    return !this.fixed && this.posUpdateTime != null && getTimeInServerRefFrame().diff(this.posUpdateTime) > showAnticipatedTimeMS;
+  }
+
+  // Is the track old enough that we should dead reckon the position?
   oldEnoughToDR() {
     return !this.fixed && this.posUpdateTime != null && getTimeInServerRefFrame().diff(this.posUpdateTime) > deadReckonTimeMS;
   }
@@ -415,8 +421,8 @@ class Entity {
         symbol = CATEGORY_SYMBOLS.get(this.category);
       }
 
-      // Change symbol to "anticipated" if dead reckoning
-      if (this.oldEnoughToDR()) {
+      // Change symbol to "anticipated" if old enough
+      if (this.oldEnoughToShowAnticipated()) {
         symbol = symbol.substr(0, 3) + "A" + symbol.substr(4);
       }
       return symbol;
@@ -633,16 +639,11 @@ function requestLiveData() {
       handleFailure();
     },
     complete: function() {
-      // Adjust entities if they need to have their symbol changed or be dropped,
-      // then call update on the map. Note no need to update the table here as that
-      // will already be updated every second in its own thread.
-      dropTimedOutAircraft();
-      updateMap();
-      // On first fetch, update the table since the separate table updater thread
+      // On first fetch, update the display since the separate table updater thread
       // won't be running yet. Subsequently the thread takes over so we don't need
       // to do it here.
       if (firstFetch) {
-        updateTable();
+        updateAll();
       }
       firstFetch = false;
       // Request the next run of the request at the defined interval.
@@ -702,6 +703,14 @@ function dropTimedOutAircraft() {
       entities.delete(e.hex);
     }
   });
+}
+
+// Update map, table and drop timed out aircraft. Run every second to
+// keep the display up to date.
+async function updateAll() {
+  dropTimedOutAircraft();
+  updateMap();
+  updateTable();
 }
 
 // Update map, clearing old markers and drawing new ones
@@ -845,7 +854,7 @@ function defaultZoom() {
 function getAgeColor(time) {
   if (time != null) {
     var age = getTimeInServerRefFrame().diff(time);
-    if (age <= deadReckonTimeMS) {
+    if (age <= showAnticipatedTimeMS) {
       return "green";
     } else if (age <= dropTrackTimeMS) {
       return "orange";
@@ -955,14 +964,15 @@ $("#refreshTime").change(function() {
 });
 $("#deadReckonTime").change(function() {
   deadReckonTimeMS = parseInt($(this).val()) * 1000;
-  updateMap();
-  updateTable();
+  updateAll();
+});
+$("#showAnticipatedTime").change(function() {
+  showAnticipatedTimeMS = parseInt($(this).val()) * 1000;
+  updateAll();
 });
 $("#dropTrackTime").change(function() {
   dropTrackTimeMS = parseInt($(this).val()) * 1000;
-  dropTimedOutAircraft();
-  updateMap();
-  updateTable();
+  updateAll();
 });
 
 
@@ -1011,10 +1021,10 @@ $("div#mobileswitcher").click(function() {
 //    history store of data
 // 6) Run another single shot of live data, appending to the end of the
 //    history
-// 7) Update map and table once, at the end of that process.
+// 7) Update display once, at the end of that process.
 // 8) We are now fully up-to-date, so now kick off the two interval
 //    processes that will request new live data every 10 seconds, and
-//    update the table every second.
+//    update the display every second.
 
 // First do a one-off live data request so we have something to display.
 requestLiveData();
@@ -1031,9 +1041,9 @@ setTimeout(processHistory, 9000);
 // its own setTimeout after it finishes, to trigger timed requests. It's
 // done this way so we can change the polling interval interactively.
 setTimeout(requestLiveData, dataRefreshIntervalMS);
-// The table updater is done as an interval, every second, but not
+// The display updater is done as an interval, every second, but not
 // *starting* until 10 seconds has elapsed, so it gives the history
 // processing time to finish.
 setTimeout(function() {
-  setInterval(updateTable, 1000)
+  setInterval(updateAll, 1000)
 }, 10000);
