@@ -151,6 +151,7 @@ var snailTrailsMode = 1; // 0 = none, 1 = only selected, 2 = all
 var deadReckonTimeMS = 1000; // Fixed on a very short time to always show dead reckoned position, like FlightRadar24
 var showAnticipatedTimeMS = 60000;
 var dropTrackTimeMS = 300000;
+var dropTrackAtZeroAltTimeMS = 30000; // Drop tracks at zero altitude sooner because they've likely landed, dead reckoning far past the airport runway looks weird
 var detailedMap = true;
 
 
@@ -365,7 +366,7 @@ class Entity {
   // Gets an altitude for the icon, either getAltitude() or drAltitude() as required
   iconAltitude() {
     var alt = this.getAltitude();
-    if (this.oldEnoughToDR() && this.drAltitude() != null) {
+    if (this.oldEnoughToDR() && this.drAltitude() != null && !isNaN(this.drAltitude())) {
       alt = this.drAltitude();
     }
     return alt;
@@ -384,7 +385,8 @@ class Entity {
 
   // Is the track old enough that we should drop it?
   oldEnoughToDelete() {
-    return !this.fixed && getTimeInServerRefFrame().diff(this.updateTime) > dropTrackTimeMS;
+    return !this.fixed && (getTimeInServerRefFrame().diff(this.updateTime) > dropTrackTimeMS
+    || (this.iconAltitude() <= 0 && getTimeInServerRefFrame().diff(this.updateTime) > dropTrackAtZeroAltTimeMS));
   }
 
   // Generate the name for display on the map. Prefer flight ID, then registration,
