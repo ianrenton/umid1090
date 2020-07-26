@@ -188,6 +188,8 @@ class Entity {
   updateTime = null;
   // Last time position was updated
   posUpdateTime = null;
+  // Last time altitude rate was updated
+  altRateUpdateTime = null;
 
   // Create new entity
   constructor(hex, fixed) {
@@ -232,9 +234,9 @@ class Entity {
     if (a.alt_baro != null) {
       bestAlt = a.alt_baro;
     }
-    var bestAltRate = a.geom_rate;
+    var bestAltRate = a.geom_rate / 60.0;
     if (a.baro_rate != null) {
-      bestAltRate = a.baro_rate;
+      bestAltRate = a.baro_rate / 60.0;
     }
     var bestSpeed = null;
     if (a.mach != null) {
@@ -278,6 +280,7 @@ class Entity {
     }
     if (bestAltRate != null) {
       this.altRate = bestAltRate;
+      this.altRateUpdateTime = seen;
     }
     if (a.mach != null) {
       this.speed = bestSpeed;
@@ -324,6 +327,28 @@ class Entity {
     }
   }
 
+  // Get the latest known altitude to the nearest 100 ft
+  getAltitude() {
+    if (this.altitude != null && !isNaN(this.altitude)) {
+      return Math.max(0, (this.altitude / 100).toFixed(0) * 100);
+    } else {
+      return null;
+    }
+  }
+
+  // Get the dead reckoned altitude based on its last altitude update plus
+  // altitude rate at that time
+  drAltitude() {
+    if (this.altitude != null && !isNaN(this.altitude) && this.altRateUpdateTime != null && this.altRate != null) {
+      // Can dead reckon
+      var timePassedSec = getTimeInServerRefFrame().diff(this.posUpdateTime) / 1000.0;
+      var drAlt = this.altitude + (this.altRate * timePassedSec);
+      return Math.max(0, (drAlt / 100).toFixed(0) * 100);
+    } else {
+      return null;
+    }
+  }
+
   // Gets a position for the icon, either position() or drPosition() as required
   iconPosition() {
     var pos = this.position();
@@ -332,6 +357,15 @@ class Entity {
       pos = this.drPosition();
     }
     return pos;
+  }
+
+  // Gets an altitude for the icon, either getAltitude() or drAltitude() as required
+  iconAltitude() {
+    var alt = this.getAltitude();
+    if (this.oldEnoughToDR() && this.drAltitude() != null) {
+      alt = this.drAltitude();
+    }
+    return alt;
   }
 
   // Is the track old enough that we should display the track as an anticipated
@@ -484,7 +518,7 @@ class Entity {
       staffComments: detailedMap ? this.firstDescrip().toUpperCase() : "",
       additionalInformation: detailedMap ? this.secondDescrip().toUpperCase() : "",
       direction: (this.heading != null) ? this.heading : "",
-      altitudeDepth: (this.altitude != null && detailedMap) ? (this.altitude.toFixed(0) + "FT") : "",
+      altitudeDepth: (this.iconAltitude() != null && detailedMap) ? ("FL" + this.iconAltitude() / 100) : "",
       speed: (this.speed != null && detailedMap) ? (this.speed.toFixed(0) + "KTS") : "",
       type: this.mapDisplayName().toUpperCase(),
       dtg: ((!this.fixed && this.posUpdateTime != null && detailedMap) ? this.posUpdateTime.utc().format("DDHHmmss[Z]MMMYY").toUpperCase() : ""),
@@ -754,7 +788,7 @@ async function updateTable() {
   // Create header
   var table = $('<table>');
   table.addClass('tracktable');
-  var headerFields = "<th>HEX</th><th>FLIGHT</th><th>SQU</th><th>TYPE</th><th>LAT</th><th>LON</th><th>ALT<br>FT</th><th>HDG<br>DEG</th><th>SPD<br>KTS</th><th>SIG<br>dB</th><th>POS<br/>AGE</th><th>DATA<br/>AGE</th>";
+  var headerFields = "<th>HEX</th><th>FLIGHT</th><th>SQU</th><th>TYPE</th><th>LAT</th><th>LON</th><th>ALT<br>FL</th><th>HDG<br>DEG</th><th>SPD<br>KTS</th><th>SIG<br>dB</th><th>POS<br/>AGE</th><th>DATA<br/>AGE</th>";
   var header = $('<tr class="data">').html(headerFields);
   table.append(header);
 
@@ -765,9 +799,9 @@ async function updateTable() {
     if (e.fixed == false) {
       // Altitude rate symbol
       var altRateSymb = "";
-      if (e.altRate != null && e.altRate > 100) {
+      if (e.altRate != null && e.altRate > 2) {
         altRateSymb = "\u25b2";
-      } else if (e.altRate != null && e.altRate < -100) {
+      } else if (e.altRate != null && e.altRate < -2) {
         altRateSymb = "\u25bc";
       }
 
@@ -778,7 +812,7 @@ async function updateTable() {
       rowFields += "<td>" + e.tableDisplayType() + "</td>";
       rowFields += "<td>" + ((e.position() != null) ? (Math.abs(e.position()[0]).toFixed(4).padStart(7, '0') + ((e.position()[0] >= 0) ? 'N' : 'S')) : "---") + "</td>";
       rowFields += "<td>" + ((e.position() != null) ? (Math.abs(e.position()[1]).toFixed(4).padStart(8, '0') + ((e.position()[1] >= 0) ? 'E' : 'W')) : "---") + "</td>";
-      rowFields += "<td>" + ((e.altitude != null && !isNaN(e.altitude)) ? (e.altitude.toFixed(0) + altRateSymb) : "---") + "</td>";
+      rowFields += "<td>" + ((e.getAltitude() != null && !isNaN(e.getAltitude())) ? ((e.getAltitude() / 100) + altRateSymb) : "---") + "</td>";
       rowFields += "<td>" + ((e.heading != null) ? e.heading.toFixed(0) : "---") + "</td>";
       rowFields += "<td>" + ((e.speed != null) ? e.speed.toFixed(0) : "---") + "</td>";
       rowFields += "<td>" + e.rssi + "</td>";
