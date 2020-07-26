@@ -37,6 +37,7 @@ var AIRLINE_CODES = new Map([
   ["EXS", "Jet2"],
   ["KLM", "KLM"],
   ["TFL", "TUI"],
+  ["TOM", "TUI"],
   ["VIR", "Virgin Atlantic"],
   ["AAL", "American Airlines"],
   ["UAL", "United Airlines"],
