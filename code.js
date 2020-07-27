@@ -75,8 +75,8 @@ var AIRLINE_CODES = new Map([
 // Symbol overrides for certain airline codes, principally military. Again you
 // may want to change them for the codes used in your area/country.
 var AIRLINE_CODE_SYMBOLS = new Map([
-  ["UKP", "EUOPDJ------"],
-  ["HLE", "EUOPAF------"],
+  ["UKP", "SUAPMH------"],
+  ["HLE", "SUAPMHO-----"],
   ["CG", "SFAPMHH-----"],
   ["RRR", "SFAPMFC-----"],
   ["ASCOT", "SFAPMFC-----"],
