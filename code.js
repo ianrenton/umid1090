@@ -84,6 +84,8 @@ var AIRLINE_CODE_SYMBOLS = new Map([
   ["NOH", "SFAPM-------"],
   ["AAC", "SFAPM-------"],
   ["SHF", "SFAPMHUH----"],
+  ["SPEAR", "SFAPMH------"],
+  ["VGBND", "SFAPMH------"],
   ["BWY", "SFAPMF------"],
   ["RCH", "SFAPMFC-----"]
 ]);
