@@ -45,6 +45,7 @@ var AIRLINE_CODES = new Map([
   ["AAL", "American Airlines"],
   ["UAL", "United Airlines"],
   ["DAL", "Delta Airlines"],
+  ["NPT", "Atlantic Airlines"],
   ["TAM", "LATAM Brasil"],
   ["WGN", "Western Global"],
   ["SWN", "West Air Sweden"],
