@@ -70,6 +70,9 @@ var AIRLINE_CODES = new Map([
   ["NOH", "RAF Northolt 32 Sqdn"],
   ["AAC", "Army Air Corps"],
   ["SHF", "Joint Helicopter Command"],
+  ["SPEAR", "UK Armed Forces"],
+  ["VGBND", "UK Armed Forces"],
+  ["RECON", "UK Armed Forces"],
   ["BWY", "736 Naval Air Sqdn"],
   ["RCH", "U.S. Air Mobility Command"]
 ]);
@@ -87,6 +90,7 @@ var AIRLINE_CODE_SYMBOLS = new Map([
   ["SHF", "SFAPMHUH----"],
   ["SPEAR", "SFAPMH------"],
   ["VGBND", "SFAPMH------"],
+  ["RECON", "SFAPMH------"],
   ["BWY", "SFAPMF------"],
   ["RCH", "SFAPMFC-----"]
 ]);
