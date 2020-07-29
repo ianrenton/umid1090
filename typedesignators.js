@@ -1,6 +1,7 @@
 // Data from Wikipedia
 // https://en.wikipedia.org/wiki/List_of_aircraft_type_designators
 var AIRCRAFT_TYPE_DESIGNATORS = new Map([
+  ["A109", "SABCA A-109"],
   ["A124", "Antonov AN-124"],
   ["A140", "Antonov AN-140"],
   ["A148", "Antonov An-148"],
@@ -214,6 +215,7 @@ var AIRCRAFT_TYPE_DESIGNATORS = new Map([
   ["F50", "Fokker 50"],
   ["F70", "Fokker 70"],
   ["F900", "Dassault Falcon 900"],
+  ["FA20", "Dassault Falcon 20"],
   ["FA50", "Dassault Falcon 50"],
   ["FA7X", "Dassault Falcon 7X"],
   ["G159", "Gulfstream Aerospace G-159"],
