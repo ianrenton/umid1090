@@ -61,6 +61,7 @@ var AIRLINE_CODES = new Map([
   ["ETP", "Empire Test Pilots"],
   ["CLF", "Bristol Flying Centre"],
   ["MLT", "Maleth Aero"],
+  ["AMBER", "Cobham"],
   ["UKP", "Police"],
   ["HLE", "Air Ambulance"],
   ["CG", "Coastguard"],
