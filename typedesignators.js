@@ -228,6 +228,7 @@ var AIRCRAFT_TYPE_DESIGNATORS = new Map([
   ["GLF4", "Gulfstream IV"],
   ["GLF5", "Gulfstream V"],
   ["GLF6", "Gulfstream G650"],
+  ["GLID", "Glider"],
   ["GOLF", "Tecnam P96"],
   ["HERN", "De Havilland DH.114 Heron"],
   ["H25B", "British Aerospace 125"],
