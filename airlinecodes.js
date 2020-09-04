@@ -5,6 +5,7 @@
 var AIRLINE_CODES = new Map([
   ["RYR", "Ryanair"],
   ["BAW", "British Airways"],
+  ["SHT", "British Airways"],
   ["EZY", "EasyJet"],
   ["EXS", "Jet2"],
   ["KLM", "KLM"],
@@ -28,6 +29,8 @@ var AIRLINE_CODES = new Map([
   ["TAP", "TAP Air Portugal"],
   ["FDX", "FedEx"],
   ["UPS", "UPS"],
+  ["GEC", "Lufthansa Cargo"],
+  ["CKS", "Kalitta Air"],
   ["ETP", "Empire Test Pilots"],
   ["CLF", "Bristol Flying Centre"],
   ["MLT", "Maleth Aero"],
@@ -46,6 +49,7 @@ var AIRLINE_CODES = new Map([
   ["SPEAR", "UK Armed Forces"],
   ["VGBND", "UK Armed Forces"],
   ["RECON", "UK Armed Forces"],
+  ["CMNDO", "UK Armed Forces"],
   ["BWY", "736 Naval Air Sqdn"],
   ["RCH", "U.S. Air Mobility Command"]
 ]);
@@ -66,6 +70,7 @@ var AIRLINE_CODE_SYMBOLS = new Map([
   ["SPEAR", "SFAPMH------"],
   ["VGBND", "SFAPMH------"],
   ["RECON", "SFAPMH------"],
+  ["CMNDO", "SFAPMH------"],
   ["BWY", "SFAPMF------"],
   ["RCH", "SFAPMFC-----"]
 ]);
