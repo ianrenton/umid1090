@@ -29,6 +29,8 @@ var AIRLINE_CODES = new Map([
   ["TAP", "TAP Air Portugal"],
   ["FDX", "FedEx"],
   ["UPS", "UPS"],
+  ["LH", "Lufthansa"],
+  ["DLH", "Lufthansa"],
   ["GEC", "Lufthansa Cargo"],
   ["CKS", "Kalitta Air"],
   ["ETP", "Empire Test Pilots"],
