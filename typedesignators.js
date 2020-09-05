@@ -105,7 +105,7 @@ var AIRCRAFT_TYPE_DESIGNATORS = new Map([
   ["BA11", "British Aerospace (BAC) One Eleven"],
   ["BCS1", "Airbus A220-100"],
   ["BCS3", "Airbus A220-300"],
-  ["BE20", "Beechcraft Super King 200”],
+  ["BE20", "Beechcraft Super King 200"],
   ["BE55", "Beechcraft Baron 55"],
   ["BE58", "Beechcraft Baron 58"],
   ["BELF", "Shorts SC-5 Belfast"],
