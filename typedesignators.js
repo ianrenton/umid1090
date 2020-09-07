@@ -203,6 +203,7 @@ var AIRCRAFT_TYPE_DESIGNATORS = new Map([
   ["EC25", "Eurocopter EC225 Super Puma"],
   ["EC35", "Eurocopter EC135/635"],
   ["EC45", "Eurocopter EC145"],
+  ["EH10", "Westland Merlin"],
   ["P212", "Tecnam P2012"],
   ["ECHO", "Tecnam P92"],
   ["EV97", "EV-97 EuroStar/Harmony"],
