@@ -94,7 +94,7 @@ var deadReckonTimeMS = 1000; // Fixed on a very short time to always show dead r
 var showAnticipatedTimeMS = 60000;
 var dropTrackTimeMS = 300000;
 var dropTrackAtZeroAltTimeMS = 30000; // Drop tracks at zero altitude sooner because they've likely landed, dead reckoning far past the airport runway looks weird
-var detailedMap = false;
+var showFullSymbolDetails = false;
 
 
 /////////////////////////////
@@ -471,7 +471,7 @@ class Entity {
     var lon = this.iconPosition()[1];
 
     // Generate full symbol for display
-    var detailedSymb = detailedMap || this.entitySelected();
+    var detailedSymb = showFullSymbolDetails || this.entitySelected();
     var mysymbol = new ms.Symbol(this.symbolCode(), {
       size: 35,
       staffComments: detailedSymb ? this.firstDescrip().toUpperCase() : "",
@@ -938,8 +938,8 @@ $(document).on("click", "tr", function(e) {
 $("#followSelected").click(function() {
   followSelected = $(this).is(':checked');
 });
-$("#detailedmap").click(function() {
-  detailedMap = $(this).is(':checked');
+$("#showFullSymbolDetails").click(function() {
+  showFullSymbolDetails = $(this).is(':checked');
   updateMap();
 });
 $("#snailTrails").change(function() {
