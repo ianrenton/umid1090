@@ -471,16 +471,17 @@ class Entity {
     var lon = this.iconPosition()[1];
 
     // Generate full symbol for display
+    var detailedSymb = detailedMap || this.entitySelected();
     var mysymbol = new ms.Symbol(this.symbolCode(), {
       size: 35,
-      staffComments: detailedMap ? this.firstDescrip().toUpperCase() : "",
-      additionalInformation: detailedMap ? this.secondDescrip().toUpperCase() : "",
+      staffComments: detailedSymb ? this.firstDescrip().toUpperCase() : "",
+      additionalInformation: detailedSymb ? this.secondDescrip().toUpperCase() : "",
       direction: (this.heading != null) ? this.heading : "",
-      altitudeDepth: (this.iconAltitude() != null && detailedMap) ? ("FL" + this.iconAltitude() / 100) : "",
-      speed: (this.speed != null && detailedMap) ? (this.speed.toFixed(0) + "KTS") : "",
+      altitudeDepth: (this.iconAltitude() != null && detailedSymb) ? ("FL" + this.iconAltitude() / 100) : "",
+      speed: (this.speed != null && detailedSymb) ? (this.speed.toFixed(0) + "KTS") : "",
       type: this.mapDisplayName().toUpperCase(),
-      dtg: ((!this.fixed && this.posUpdateTime != null && detailedMap) ? this.posUpdateTime.utc().format("DDHHmmss[Z]MMMYY").toUpperCase() : ""),
-      location: detailedMap ? (Math.abs(lat).toFixed(4).padStart(7, '0') + ((lat >= 0) ? 'N' : 'S') + Math.abs(lon).toFixed(4).padStart(8, '0') + ((lon >= 0) ? 'E' : 'W')) : ""
+      dtg: ((!this.fixed && this.posUpdateTime != null && detailedSymb) ? this.posUpdateTime.utc().format("DDHHmmss[Z]MMMYY").toUpperCase() : ""),
+      location: detailedSymb ? (Math.abs(lat).toFixed(4).padStart(7, '0') + ((lat >= 0) ? 'N' : 'S') + Math.abs(lon).toFixed(4).padStart(8, '0') + ((lon >= 0) ? 'E' : 'W')) : ""
     });
     mysymbol = mysymbol.setOptions({
       size: 30,
