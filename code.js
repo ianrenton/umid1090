@@ -94,7 +94,7 @@ var deadReckonTimeMS = 1000; // Fixed on a very short time to always show dead r
 var showAnticipatedTimeMS = 60000;
 var dropTrackTimeMS = 300000;
 var dropTrackAtZeroAltTimeMS = 30000; // Drop tracks at zero altitude sooner because they've likely landed, dead reckoning far past the airport runway looks weird
-var detailedMap = true;
+var detailedMap = false;
 
 
 /////////////////////////////
