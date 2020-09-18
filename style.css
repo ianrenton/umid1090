@@ -27,8 +27,12 @@ div#tote {
     width: 43em;
     height:100%; 
     float: right;
-    padding: 5em 1em 1em 1em;
+    padding: 4.5em 1em 1em 1em;
     overflow: hidden;
+}
+div#tracktablearea {
+    max-height: 70%;
+    overflow-y: scroll;
 }
 div#map { 
     width:auto; 
@@ -39,8 +43,12 @@ div#map {
 div.centre {
     text-align: center;
 }
+div#controls {
+    margin-top: 1em;
+    margin-bottom: 2em;
+    overflow-y: auto;
+}
 div#buttons {
-    margin-top: 1.5em;
     line-height: 2em;
     text-align: center;
 }
