@@ -52,6 +52,7 @@ var AIRLINE_CODES = new Map([
   ["VGBND", "UK Armed Forces"],
   ["RECON", "UK Armed Forces"],
   ["CMNDO", "UK Armed Forces"],
+  ["MARINE", "Royal Marines"],
   ["BWY", "736 Naval Air Sqdn"],
   ["RCH", "U.S. Air Mobility Command"]
 ]);
@@ -75,6 +76,8 @@ var AIRLINE_CODE_SYMBOLS = new Map([
   ["CMNDO", "SFAPMH------"],
   ["DOLPHN", "SFAPMH------"],
   ["DOLPN", "SFAPMH------"],
+  ["MARINE", "SFAPMH------"],
+  ["CASTLE", "SFAPMH------"],
   ["BWY", "SFAPMF------"],
   ["RCH", "SFAPMFC-----"]
 ]);
