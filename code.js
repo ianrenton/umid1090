@@ -10,9 +10,9 @@
 var DUMP1090_URL = window.location.protocol + "//mciserver.zapto.org/dump1090-fa/";
 var DUMP1090_URL_ALT = "http://192.168.1.241/dump1090-fa/";
 
-// Map server URLs - if re-using this code you will need to provide your own Mapbox
-// access token in the Mapbox URL. You can still use my style.
-var MAPBOX_URL = "https://api.mapbox.com/styles/v1/ianrenton/ckchhz5ks23or1ipf1le41g56/tiles/256/{z}/{x}/{y}?access_token=pk.eyJ1IjoiaWFucmVudG9uIiwiYSI6ImNrY2h4ZzU1ejE1eXoyc25uZjRvMmkyc2IifQ.JN65BkQfwQQIDfpMP_fFIQ";
+// Map layer URLs - formerly using Mapbox, but had to switch to a free option
+// due to excess use! (Nice problems to have I guess.)
+const MAP_URL = "http://tile.stamen.com/terrain-background/{z}/{x}/{y}.jpg";
 var OPENAIP_URL = "https://{s}.tile.maps.openaip.net/geowebcache/service/tms/1.0.0/openaip_basemap@EPSG%3A900913@png/{z}/{x}/{y}.png";
 
 // Base station position and map default position/zoom
@@ -910,7 +910,7 @@ var markersLayer = new L.LayerGroup();
 markersLayer.addTo(map);
 
 // Add background layers
-L.tileLayer(MAPBOX_URL).addTo(map);
+L.tileLayer(MAP_URL).addTo(map);
 L.tileLayer(OPENAIP_URL, {
   maxZoom: 14,
   minZoom: 4,
