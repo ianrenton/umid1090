@@ -910,13 +910,15 @@ var markersLayer = new L.LayerGroup();
 markersLayer.addTo(map);
 
 // Add background layers
-L.tileLayer(MAP_URL).addTo(map);
+L.tileLayer(MAP_URL, {
+  opacity: 0.5
+}).addTo(map);
 L.tileLayer(OPENAIP_URL, {
   maxZoom: 14,
   minZoom: 4,
   tms: true,
   subdomains: '12',
-  opacity: 0.3
+  opacity: 0.2
 }).addTo(map);
 
 
