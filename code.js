@@ -17,7 +17,7 @@ var OPENAIP_URL = "https://{s}.tile.maps.openaip.net/geowebcache/service/tms/1.0
 
 // Base station position and map default position/zoom
 var BASE_STATION_POS = [50.75128, -1.90168];
-var BASE_STATION_SOFTWARE = ["PiAware 3.8.1", "dump1090-fa"];
+var BASE_STATION_SOFTWARE = ["PiAware 4.0", "dump1090-fa 4.0"];
 var START_LAT_LON = [50.75128, -1.90168];
 var START_ZOOM = 9;
 
@@ -977,7 +977,7 @@ $("#dropTrackTime").change(function() {
 
 var base = new Entity("BASE", true);
 base.addPosition(BASE_STATION_POS[0], BASE_STATION_POS[1]);
-base.flight = "Base Station";
+base.flight = "M7BGT (Base Station)";
 entities.set("BASE", base);
 
 var i = 0;
