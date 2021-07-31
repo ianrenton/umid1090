@@ -7,8 +7,8 @@
 // Select the alternate URL by appending ?alt=true to the URL for UMID1090.
 // Normal users won't do this and will therefore use the main public URL, but you
 // can bookmark the "alt" version to always use your LAN address for testing.
-var DUMP1090_URL = window.location.protocol + "//planesailingserver.ianrenton.com/dump1090-fa/";
-var DUMP1090_URL_ALT = "http://192.168.1.240/dump1090-fa/";
+var DUMP1090_URL = window.location.protocol + "//planesailingserver.ianrenton.com/skyaware/";
+var DUMP1090_URL_ALT = "http://192.168.1.240/skyaware/";
 
 // Map layer URLs - formerly using Mapbox, but had to switch to a free option
 // due to excess use! (Nice problems to have I guess.)
