@@ -7,17 +7,23 @@
 // Select the alternate URL by appending ?alt=true to the URL for UMID1090.
 // Normal users won't do this and will therefore use the main public URL, but you
 // can bookmark the "alt" version to always use your LAN address for testing.
-var DUMP1090_URL = window.location.protocol + "//planesailingserver.ianrenton.com/skyaware/";
-var DUMP1090_URL_ALT = "http://192.168.1.240/skyaware/";
+var DUMP1090_URL = "https://planesailingserver.ianrenton.com/skyaware/";
+var DUMP1090_URL_ALT = "http://192.168.1.12/skyaware/";
+
+// OpenAIP client ID. While you can probably continue to use mine without problems,
+// if you are getting airspace maps failing to load, it could be due to rate limiting -
+// in which case please sign up for OpenAIP.net and get your own token.
+const OPENAIP_CLIENT_ID_TOKEN = "7d48ef890352227575feef1ebcd171e4"
 
 // Map layer URLs - formerly using Mapbox, but had to switch to a free option
 // due to excess use! (Nice problems to have I guess.)
 const MAP_URL = "http://tile.stamen.com/terrain-background/{z}/{x}/{y}.jpg";
-var OPENAIP_URL = "https://{s}.tile.maps.openaip.net/geowebcache/service/tms/1.0.0/openaip_basemap@EPSG%3A900913@png/{z}/{x}/{y}.png";
+var OPENAIP_URL = "https://api.tiles.openaip.net/api/data/openaip/{z}/{x}/{y}.png?apiKey=" + OPENAIP_CLIENT_ID_TOKEN;
 
 // Base station position and map default position/zoom
 var BASE_STATION_POS = [50.75128, -1.90168];
-var BASE_STATION_SOFTWARE = ["PiAware 4.0", "dump1090-fa 4.0"];
+var BASE_STATION_NAME = "2E0UXV (Base Station)"
+var BASE_STATION_SOFTWARE = ["PiAware 7.2", "dump1090-fa 7.2"];
 var START_LAT_LON = [50.75128, -1.90168];
 var START_ZOOM = 9;
 
@@ -911,14 +917,14 @@ markersLayer.addTo(map);
 
 // Add background layers
 L.tileLayer(MAP_URL, {
-  opacity: 0.5
+  opacity: 0.7,
+  attribution: '<a href="http://maps.stamen.com/">Map tiles</a> by <a target="_top" href="http://stamen.com">Stamen Design</a>, under <a href="http://creativecommons.org/licenses/by/3.0">CC BY 3.0</a>. Data © <a href="http://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>.'
 }).addTo(map);
 L.tileLayer(OPENAIP_URL, {
   maxZoom: 14,
-  minZoom: 4,
-  tms: true,
-  subdomains: '12',
-  opacity: 0.2
+  minZoom: 7,
+  opacity: 0.5,
+  attribution: '© <a href="https://www.openaip.net">OpenAIP</a> contributors.'
 }).addTo(map);
 
 
@@ -977,7 +983,7 @@ $("#dropTrackTime").change(function() {
 
 var base = new Entity("BASE", true);
 base.addPosition(BASE_STATION_POS[0], BASE_STATION_POS[1]);
-base.flight = "M7BGT (Base Station)";
+base.flight = BASE_STATION_NAME;
 entities.set("BASE", base);
 
 var i = 0;

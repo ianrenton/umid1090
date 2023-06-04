@@ -31,7 +31,7 @@ div#tote {
     overflow: hidden;
 }
 div#tracktablearea {
-    max-height: 70%;
+    max-height: 65%;
     overflow-y: scroll;
 }
 div#map { 
